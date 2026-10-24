@@ -203,7 +203,7 @@ formJornada.addEventListener('submit', function(event) {
 });
 
 // ==========================================
-// 5. LÓGICA DE INFORMES Y PDF NATIVO
+// 5. LÓGICA DE INFORMES Y PDF NATIVO PÚBLICO
 // ==========================================
 function renderizarInforme() {
     const historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
@@ -250,7 +250,7 @@ function renderizarInforme() {
     contenedorTabla.innerHTML = htmlTabla;
 }
 
-/** Exportar a PDF solucionando restricciones de Android */
+/** Exportar a PDF solucionando restricciones de Android de forma limpia */
 window.descargarPDF = function() {
     const elemento = document.getElementById('reporte-contenido');
     const btn = document.querySelector('button[onclick="descargarPDF()"]');
@@ -267,57 +267,45 @@ window.descargarPDF = function() {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
+    // Generamos el PDF temporalmente en la memoria
     // @ts-ignore
-    if (window.capacitorExports) {
-        // --- 1. MODO APP NATIVA ANDROID ---
-        // @ts-ignore
-        html2pdf().set(opt).from(elemento).toPdf().output('datauristring').then(function (pdfDataUri) {
+    html2pdf().set(opt).from(elemento).output('blob').then(function (pdfBlob) {
+        try {
+            // Creamos un archivo válido para compartir
+            const file = new File([pdfBlob], "Reporte_WorkingTime.pdf", { type: 'application/pdf' });
             
-            const base64Data = pdfDataUri.split(',')[1];
-            const nombreArchivo = "Reporte_WorkingTime_" + Date.now() + ".pdf";
-
-            // @ts-ignore
-            const Filesystem = capacitorExports.Filesystem;
-            // @ts-ignore
-            const Share = capacitorExports.Share;
-
-            Filesystem.writeFile({
-                path: nombreArchivo,
-                data: base64Data,
-                directory: 'CACHE' // Guarda localmente en el cache de la app
-            }).then(function(result) {
-                Share.share({
+            // Verificamos si el dispositivo soporta compartir archivos directamente
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    files: [file],
                     title: 'Reporte de Horas',
-                    text: 'Adjunto mis jornadas laborales.',
-                    url: result.uri, // Envia el archivo interno al sistema
-                    dialogTitle: 'Compartir o Guardar PDF'
+                    text: 'Adjunto mis jornadas laborales.'
                 }).then(() => {
                     // @ts-ignore
                     btn.innerText = originalText;
-                }).catch(() => {
+                }).catch(err => {
+                    console.log('Compartir cancelado', err);
                     // @ts-ignore
                     btn.innerText = originalText;
                 });
-            }).catch(function(err) {
-                alert('Error al guardar archivo en el sistema: ' + JSON.stringify(err));
+            } else {
+                // Fallback de seguridad si no se puede compartir
                 // @ts-ignore
-                btn.innerText = originalText;
-            });
-        }).catch(function(err) {
-            alert('Error generando PDF: ' + err);
+                html2pdf().set(opt).from(elemento).save();
+                setTimeout(() => { 
+                    // @ts-ignore
+                    btn.innerText = originalText; 
+                }, 2000);
+            }
+        } catch (error) {
             // @ts-ignore
-            btn.innerText = originalText;
-        });
-        
-    } else {
-        // --- 2. MODO WEB TRADICIONAL (Acode o Chrome) ---
-        // @ts-ignore
-        html2pdf().set(opt).from(elemento).save();
-        setTimeout(() => { 
-            // @ts-ignore
-            btn.innerText = originalText; 
-        }, 2000);
-    }
+            html2pdf().set(opt).from(elemento).save();
+            setTimeout(() => { 
+                // @ts-ignore
+                btn.innerText = originalText; 
+            }, 2000);
+        }
+    });
 };
 
 // ==========================================
