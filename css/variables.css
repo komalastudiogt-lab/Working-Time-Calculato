@@ -1,0 +1,12 @@
+:root {
+  /* Paleta de colores solicitada */
+  --color-grafito: #252823;
+  --color-fondo: #F4F3EF;
+  --color-verde-salvia: #A5B49C;
+  --color-arena: #C5A77A;
+  --color-blanco: #FFFFFF;
+
+  /* Sombras y bordes */
+  --sombra-suave: 0 4px 6px rgba(37, 40, 35, 0.08);
+  --radio-borde: 12px;
+}
