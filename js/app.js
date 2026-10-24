@@ -203,7 +203,7 @@ formJornada.addEventListener('submit', function(event) {
 });
 
 // ==========================================
-// 5. LÓGICA DE INFORMES Y PDF
+// 5. LÓGICA DE INFORMES Y PDF NATIVO
 // ==========================================
 function renderizarInforme() {
     const historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
@@ -250,10 +250,15 @@ function renderizarInforme() {
     contenedorTabla.innerHTML = htmlTabla;
 }
 
-/** Exportar a PDF usando el menú de compartir de Android */
+/** Exportar a PDF solucionando restricciones de Android */
 window.descargarPDF = function() {
     const elemento = document.getElementById('reporte-contenido');
-    
+    const btn = document.querySelector('button[onclick="descargarPDF()"]');
+    // @ts-ignore
+    const originalText = btn.innerText;
+    // @ts-ignore
+    btn.innerText = "Generando PDF...";
+
     const opt = {
         margin:       15,
         filename:     'Reporte_WorkingTime.pdf',
@@ -262,30 +267,57 @@ window.descargarPDF = function() {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // 1. Generamos el PDF temporalmente en la memoria (como Blob)
     // @ts-ignore
-    html2pdf().set(opt).from(elemento).output('blob').then(function (pdfBlob) {
-        try {
-            // 2. Preparamos el archivo
-            const file = new File([pdfBlob], "Reporte_WorkingTime.pdf", { type: 'application/pdf' });
+    if (window.capacitorExports) {
+        // --- 1. MODO APP NATIVA ANDROID ---
+        // @ts-ignore
+        html2pdf().set(opt).from(elemento).toPdf().output('datauristring').then(function (pdfDataUri) {
             
-            // 3. Si Android soporta el menú de compartir nativo, lo abrimos
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({
-                    files: [file],
-                    title: 'Mi Reporte de Horas',
-                    text: 'Adjunto el reporte de mis jornadas laborales.'
-                }).catch(err => console.log('El usuario canceló compartir.', err));
-            } else {
-                // 4. Fallback: si falla o estamos en web, forzamos la descarga clásica
-                // @ts-ignore
-                html2pdf().set(opt).from(elemento).save();
-            }
-        } catch (error) {
+            const base64Data = pdfDataUri.split(',')[1];
+            const nombreArchivo = "Reporte_WorkingTime_" + Date.now() + ".pdf";
+
             // @ts-ignore
-            html2pdf().set(opt).from(elemento).save();
-        }
-    });
+            const Filesystem = capacitorExports.Filesystem;
+            // @ts-ignore
+            const Share = capacitorExports.Share;
+
+            Filesystem.writeFile({
+                path: nombreArchivo,
+                data: base64Data,
+                directory: 'CACHE' // Guarda localmente en el cache de la app
+            }).then(function(result) {
+                Share.share({
+                    title: 'Reporte de Horas',
+                    text: 'Adjunto mis jornadas laborales.',
+                    url: result.uri, // Envia el archivo interno al sistema
+                    dialogTitle: 'Compartir o Guardar PDF'
+                }).then(() => {
+                    // @ts-ignore
+                    btn.innerText = originalText;
+                }).catch(() => {
+                    // @ts-ignore
+                    btn.innerText = originalText;
+                });
+            }).catch(function(err) {
+                alert('Error al guardar archivo en el sistema: ' + JSON.stringify(err));
+                // @ts-ignore
+                btn.innerText = originalText;
+            });
+        }).catch(function(err) {
+            alert('Error generando PDF: ' + err);
+            // @ts-ignore
+            btn.innerText = originalText;
+        });
+        
+    } else {
+        // --- 2. MODO WEB TRADICIONAL (Acode o Chrome) ---
+        // @ts-ignore
+        html2pdf().set(opt).from(elemento).save();
+        setTimeout(() => { 
+            // @ts-ignore
+            btn.innerText = originalText; 
+        }, 2000);
+    }
 };
 
 // ==========================================
