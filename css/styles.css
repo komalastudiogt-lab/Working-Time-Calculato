@@ -17,10 +17,12 @@ body {
   overflow: hidden;
 }
 
+/* Header Minimalista */
 header {
   padding: 20px 25px;
   background: transparent;
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .header-content {
@@ -40,26 +42,46 @@ header h1 {
   color: var(--main-dark);
 }
 
+/* AQUI ESTÁ EL CAMBIO PRINCIPAL: Bloqueamos el scroll de la página entera */
 main {
   flex: 1;
-  overflow-y: auto;
-  padding-bottom: 90px;
+  overflow: hidden; 
+  display: flex;
+  flex-direction: column;
 }
 
 .dashboard-padding {
   padding: 0 25px;
 }
 
+/* Control de pantallas (Ahora ocupan el 100% de la altura) */
 .screen {
   display: none;
+  height: 100%;
+  width: 100%;
   animation: fadeIn 0.4s ease;
 }
-.screen.active { display: block; }
+.screen.active { 
+  display: flex;
+  flex-direction: column;
+}
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Para la pantalla Inicio: La parte superior no se encoje */
+#view-inicio .dashboard-padding {
+  flex-shrink: 0;
+}
+
+/* Las otras pantallas sí necesitan scroll normal entero */
+#view-jornadas, #view-informes, #view-perfil {
+  overflow-y: auto;
+  padding-bottom: 120px;
+}
+
+/* TARJETA AZUL PRINCIPAL */
 .main-card {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   border-radius: var(--radius-lg);
@@ -98,6 +120,7 @@ main {
   opacity: 0.8;
 }
 
+/* ACCIONES RÁPIDAS */
 .quick-actions {
   display: flex;
   justify-content: center;
@@ -129,13 +152,17 @@ main {
   color: var(--main-dark);
 }
 
+/* EL SEGUNDO CAMBIO IMPORTANTE: El panel oscuro ahora tiene su propio scroll interno */
 .dark-sheet {
   background-color: var(--main-dark);
   border-radius: 30px 30px 0 0;
   padding: 30px 25px;
-  min-height: 50vh;
   box-shadow: var(--shadow-dark);
+  flex: 1; /* Toma todo el espacio hacia abajo */
+  overflow-y: auto; /* Habilita el scroll interno aquí */
+  padding-bottom: 120px; /* Evita que el navbar tape el último elemento */
 }
+
 .sheet-header {
   display: flex;
   justify-content: space-between;
@@ -174,7 +201,6 @@ main {
 .jornada-amount h4 { color: var(--white); font-size: 1rem; }
 .jornada-amount p { color: var(--accent-light); font-size: 0.8rem; }
 
-/* Nuevos botones de acción (Editar/Borrar) */
 .jornada-actions {
   width: 100%;
   display: flex;
@@ -198,7 +224,7 @@ main {
 .btn-action-sm.edit { color: var(--accent-light); background: rgba(96, 165, 250, 0.1); }
 .btn-action-sm.delete { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
 
-
+/* FORMULARIOS BÁSICOS */
 .form-container {
   background-color: var(--white);
   border-radius: var(--radius-lg);
@@ -303,6 +329,7 @@ input[type="date"], input[type="time"] {
   margin-top: 10px;
 }
 
+/* REPORTES */
 .report-box {
   background-color: #f8fafc;
   border-radius: 16px;
@@ -332,6 +359,7 @@ input[type="date"], input[type="time"] {
   font-size: 0.9rem;
 }
 
+/* NAVEGACIÓN INFERIOR ESTILO APP */
 .bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
