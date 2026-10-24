@@ -11,9 +11,7 @@ function switchScreen(targetId, navIndex) {
     document.getElementById(targetId).classList.add('active');
     navItems[navIndex].classList.add('active');
 
-    if(targetId === 'view-informes') {
-        renderizarInforme();
-    }
+    if(targetId === 'view-informes') renderizarInforme();
 }
 
 navItems.forEach(item => {
@@ -40,7 +38,6 @@ const formPerfil = document.getElementById('form-perfil');
 
 formPerfil.addEventListener('submit', function(event) {
     event.preventDefault();
-
     // @ts-ignore
     const valNombre = document.getElementById('perfil-nombre').value;
     // @ts-ignore
@@ -51,10 +48,8 @@ formPerfil.addEventListener('submit', function(event) {
     const valFestivo = document.getElementById('perfil-festivo').value;
 
     const perfil = {
-        nombre: valNombre,
-        moneda: valMoneda,
-        tarifa: parseFloat(valTarifa) || 0,
-        festivo: parseFloat(valFestivo) || 0
+        nombre: valNombre, moneda: valMoneda,
+        tarifa: parseFloat(valTarifa) || 0, festivo: parseFloat(valFestivo) || 0
     };
 
     localStorage.setItem('wtc_perfil', JSON.stringify(perfil));
@@ -67,7 +62,6 @@ function cargarPerfil() {
     const perfilGuardado = localStorage.getItem('wtc_perfil');
     if (perfilGuardado) {
         const perfil = JSON.parse(perfilGuardado);
-        
         // @ts-ignore
         document.getElementById('perfil-nombre').value = perfil.nombre || '';
         // @ts-ignore
@@ -80,22 +74,19 @@ function cargarPerfil() {
 }
 
 // ==========================================
-// 3. LÓGICA DE LA PANTALLA INICIO (Y EDICIÓN)
+// 3. LÓGICA DE LA PANTALLA INICIO Y EDICIÓN
 // ==========================================
-let idEditando = null; // Variable para saber si estamos editando
+let idEditando = null;
 
-// Función Global para Borrar
 window.eliminarJornada = function(id) {
     if(confirm("¿Estás seguro de que deseas eliminar este turno permanentemente?")) {
         let historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
         historial = historial.filter(j => j.id !== id);
         localStorage.setItem('wtc_jornadas', JSON.stringify(historial));
-        renderizarInicio();
-        renderizarInforme();
+        renderizarInicio(); renderizarInforme();
     }
 };
 
-// Función Global para Preparar la Edición
 window.prepararEdicion = function(id) {
     const historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
     const jornada = historial.find(j => j.id === id);
@@ -103,7 +94,6 @@ window.prepararEdicion = function(id) {
 
     idEditando = id;
     
-    // Llenar el formulario con los datos
     // @ts-ignore
     document.getElementById('jornada-fecha').value = jornada.fecha;
     // @ts-ignore
@@ -112,26 +102,28 @@ window.prepararEdicion = function(id) {
     document.getElementById('jornada-fin').value = jornada.fin;
     // @ts-ignore
     document.getElementById('jornada-pausa').value = jornada.pausaMinutos;
+    
+    // Compatibilidad hacia atrás (si editamos una jornada antigua con checkbox)
+    const tipoFestivo = jornada.tipoFestivo ? jornada.tipoFestivo : (jornada.esFestivo ? 'all' : 'none');
     // @ts-ignore
-    document.getElementById('jornada-festivo').checked = jornada.esFestivo;
+    document.getElementById('jornada-tipo-festivo').value = tipoFestivo;
+    
+    // El limpiado extrae solo la nota real escrita por el usuario
+    let notaReal = jornada.notas || '';
+    if(notaReal.includes('|')) notaReal = notaReal.split('|')[1].trim(); 
     // @ts-ignore
-    document.getElementById('jornada-notas').value = jornada.notas || '';
+    document.getElementById('jornada-notas').value = notaReal;
 
-    // Cambiar texto de los botones
     const btnGuardar = document.getElementById('btn-guardar-jornada');
     if(btnGuardar) btnGuardar.innerHTML = 'Actualizar Jornada';
-    
     const btnCancelar = document.getElementById('btn-cancelar-edicion');
     if(btnCancelar) btnCancelar.style.display = 'flex';
 
-    // Mover a la pestaña de Registro
     switchScreen('view-jornadas', 1);
 };
 
-// Función Global para Cancelar Edición
 window.cancelarEdicion = function() {
     idEditando = null;
-    
     // @ts-ignore
     document.getElementById('form-jornada').reset();
     // @ts-ignore
@@ -139,7 +131,6 @@ window.cancelarEdicion = function() {
     
     const btnGuardar = document.getElementById('btn-guardar-jornada');
     if(btnGuardar) btnGuardar.innerHTML = 'Guardar Jornada';
-    
     const btnCancelar = document.getElementById('btn-cancelar-edicion');
     if(btnCancelar) btnCancelar.style.display = 'none';
     
@@ -154,8 +145,7 @@ function renderizarInicio() {
     const txtTotalDinero = document.getElementById('inicio-total-dinero');
     const txtTotalHoras = document.getElementById('inicio-total-horas');
 
-    let sumaTotalDinero = 0;
-    let sumaTotalHoras = 0;
+    let sumaTotalDinero = 0; let sumaTotalHoras = 0;
 
     if (historial.length === 0) {
         contenedor.innerHTML = '<p style="color: #64748b; text-align: center; margin-top: 20px;">No hay transacciones.</p>';
@@ -179,15 +169,18 @@ function renderizarInicio() {
         const item = document.createElement('div');
         item.className = 'jornada-item';
         
-        let subTexto = jornada.esFestivo ? "Día Festivo" : (jornada.notas ? jornada.notas : "Jornada Regular");
+        let fechaVisual = jornada.fechaMostrar || jornada.fecha;
+        let iconoClase = (jornada.tipoFestivo && jornada.tipoFestivo !== 'none') ? "celebration" : "work_history";
 
         item.innerHTML = `
             <div class="jornada-icon">
-                <span class="material-symbols-rounded">work_history</span>
+                <span class="material-symbols-rounded">${iconoClase}</span>
             </div>
             <div class="jornada-info">
-                <h4>${jornada.fecha}</h4>
-                <p>${jornada.inicio} - ${jornada.fin} | ${subTexto}</p>
+                <h4>${fechaVisual}</h4>
+                <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">
+                    ${jornada.inicio} - ${jornada.fin} | ${jornada.notas || 'Turno Regular'}
+                </p>
             </div>
             <div class="jornada-amount">
                 <h4>${jornada.moneda} ${jornada.totalEstimado}</h4>
@@ -195,10 +188,10 @@ function renderizarInicio() {
             </div>
             <div class="jornada-actions">
                 <button onclick="prepararEdicion('${jornada.id}')" class="btn-action-sm edit">
-                    <span class="material-symbols-rounded" style="font-size: 18px;">edit</span> Editar
+                    <span class="material-symbols-rounded" style="font-size: 18px;">edit</span>
                 </button>
                 <button onclick="eliminarJornada('${jornada.id}')" class="btn-action-sm delete">
-                    <span class="material-symbols-rounded" style="font-size: 18px;">delete</span> Borrar
+                    <span class="material-symbols-rounded" style="font-size: 18px;">delete</span>
                 </button>
             </div>
         `;
@@ -207,10 +200,9 @@ function renderizarInicio() {
 }
 
 // ==========================================
-// 4. LÓGICA DE REGISTRO
+// 4. EL NUEVO MOTOR DE CÁLCULO DE JORNADAS
 // ==========================================
 const formJornada = document.getElementById('form-jornada');
-
 // @ts-ignore
 document.getElementById('jornada-fecha').valueAsDate = new Date();
 
@@ -226,70 +218,110 @@ formJornada.addEventListener('submit', function(event) {
     // @ts-ignore
     const pausaMinutos = parseInt(document.getElementById('jornada-pausa').value) || 0;
     // @ts-ignore
-    const esFestivo = document.getElementById('jornada-festivo').checked;
+    const tipoFestivo = document.getElementById('jornada-tipo-festivo').value;
     // @ts-ignore
-    const notas = document.getElementById('jornada-notas').value;
+    const notasUsuario = document.getElementById('jornada-notas').value;
 
-    const perfilGuardado = JSON.parse(localStorage.getItem('wtc_perfil')) || { tarifa: 0, festivo: 0, moneda: '' };
+    const perfil = JSON.parse(localStorage.getItem('wtc_perfil')) || { tarifa: 0, festivo: 0, moneda: '' };
     
-    let [horaInicio, minInicio] = inicio.split(':').map(Number);
-    let [horaFin, minFin] = fin.split(':').map(Number);
+    let [hIni, mIni] = inicio.split(':').map(Number);
+    let [hFin, mFin] = fin.split(':').map(Number);
     
-    let minutosTotales = (horaFin * 60 + minFin) - (horaInicio * 60 + minInicio);
-    
-    if (minutosTotales < 0) {
-        minutosTotales += 24 * 60; 
+    let minTotalesDia1 = 0;
+    let minTotalesDia2 = 0;
+    let cruzaMedianoche = false;
+
+    // Detectamos si el turno cruza hacia el siguiente día
+    if ((hFin * 60 + mFin) <= (hIni * 60 + mIni) && inicio !== fin) {
+        cruzaMedianoche = true;
+        minTotalesDia1 = (24 * 60) - (hIni * 60 + mIni);
+        minTotalesDia2 = (hFin * 60 + mFin);
+    } else {
+        minTotalesDia1 = (hFin * 60 + mFin) - (hIni * 60 + mIni);
     }
 
-    let minutosTrabajados = minutosTotales - pausaMinutos;
-    if (minutosTrabajados < 0) minutosTrabajados = 0; 
-
-    const horasTrabajadas = minutosTrabajados / 60;
-
-    const pagoBase = horasTrabajadas * perfilGuardado.tarifa;
-    let recargoFestivo = 0;
-    
-    if (esFestivo) {
-        recargoFestivo = pagoBase * (perfilGuardado.festivo / 100);
+    let minutosTotales = minTotalesDia1 + minTotalesDia2;
+    if (minutosTotales === 0 && inicio === fin) {
+        minutosTotales = 24 * 60; // Caso excepcional turno de 24 hrs
+        minTotalesDia1 = 24 * 60;
     }
 
-    const totalEstimado = pagoBase + recargoFestivo;
+    // Dividir la pausa de almuerzo/café proporcionalmente a las horas de cada día
+    let ratio1 = minutosTotales > 0 ? minTotalesDia1 / minutosTotales : 0;
+    let ratio2 = minutosTotales > 0 ? minTotalesDia2 / minutosTotales : 0;
+    
+    let hrsDia1 = Math.max(0, minTotalesDia1 - (pausaMinutos * ratio1)) / 60;
+    let hrsDia2 = Math.max(0, minTotalesDia2 - (pausaMinutos * ratio2)) / 60;
+
+    let tarifaNormal = perfil.tarifa;
+    let multiplicadorFestivo = perfil.festivo / 100;
+
+    // Cálculo fraccionado según selección legal
+    let recargo1 = 0;
+    let recargo2 = 0;
+
+    if (tipoFestivo === 'all') {
+        recargo1 = hrsDia1 * (tarifaNormal * multiplicadorFestivo);
+        recargo2 = hrsDia2 * (tarifaNormal * multiplicadorFestivo);
+    } else if (tipoFestivo === 'start') {
+        recargo1 = hrsDia1 * (tarifaNormal * multiplicadorFestivo);
+    } else if (tipoFestivo === 'end' && cruzaMedianoche) {
+        recargo2 = hrsDia2 * (tarifaNormal * multiplicadorFestivo);
+    } else if (tipoFestivo === 'end' && !cruzaMedianoche) {
+        recargo1 = hrsDia1 * (tarifaNormal * multiplicadorFestivo); // Corrección si elige salida sin cruzar media noche
+    }
+
+    let pagoBase = (hrsDia1 + hrsDia2) * tarifaNormal;
+    let totalEstimado = pagoBase + recargo1 + recargo2;
+    let horasTrabajadas = hrsDia1 + hrsDia2;
+
+    // Generar la etiqueta visual de fecha (Ej: 17 oct al 18 oct)
+    let fObj1 = new Date(fecha + 'T12:00:00'); // Usamos T12 para evitar bugs de zona horaria
+    let dia1Str = fObj1.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+    let fechaMostrar = dia1Str;
+    
+    if (cruzaMedianoche) {
+        let fObj2 = new Date(fObj1);
+        fObj2.setDate(fObj2.getDate() + 1);
+        let dia2Str = fObj2.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
+        fechaMostrar = `${dia1Str} al ${dia2Str}`;
+    }
+
+    // Agregar nota inteligente
+    let subTextoNota = 'Normal';
+    if(tipoFestivo === 'all') subTextoNota = 'Festivo Completo';
+    else if(tipoFestivo === 'start') subTextoNota = 'Festivo (Entrada)';
+    else if(tipoFestivo === 'end') subTextoNota = 'Festivo (Salida)';
+    
+    let notasFinales = notasUsuario ? `${subTextoNota} | ${notasUsuario}` : subTextoNota;
 
     const nuevaJornada = {
-        id: idEditando ? idEditando : Date.now().toString(), // Mantiene el ID si edita
-        fecha,
-        inicio,
-        fin,
+        id: idEditando ? idEditando : Date.now().toString(),
+        fecha: fecha,
+        fechaMostrar: fechaMostrar, // Guardamos la etiqueta de días múltiples
+        inicio, fin,
         pausaMinutos,
-        esFestivo,
-        notas,
+        tipoFestivo: tipoFestivo,
+        notas: notasFinales,
         horasTrabajadas: horasTrabajadas.toFixed(2),
-        pagoBase: pagoBase.toFixed(2),
-        recargoFestivo: recargoFestivo.toFixed(2),
         totalEstimado: totalEstimado.toFixed(2),
-        moneda: perfilGuardado.moneda
+        moneda: perfil.moneda
     };
 
     let historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
     
     if (idEditando) {
-        // Actualizar registro existente
         const index = historial.findIndex(j => j.id === idEditando);
         if(index !== -1) historial[index] = nuevaJornada;
-        alert(`¡Turno actualizado!\nTotal recalculado: ${perfilGuardado.moneda} ${totalEstimado.toFixed(2)}`);
+        alert(`¡Turno actualizado!\nTotal recalculado: ${perfil.moneda} ${totalEstimado.toFixed(2)}`);
     } else {
-        // Agregar nuevo
         historial.push(nuevaJornada);
-        alert(`¡Turno registrado!\nTotal sumado: ${perfilGuardado.moneda} ${totalEstimado.toFixed(2)}`);
+        alert(`¡Turno guardado correctamente!\nTotal: ${perfil.moneda} ${totalEstimado.toFixed(2)}`);
     }
 
     localStorage.setItem('wtc_jornadas', JSON.stringify(historial));
-
-    // Limpiar y resetear vista
     // @ts-ignore
     window.cancelarEdicion();
-    renderizarInicio();
-    renderizarInforme();
 });
 
 // ==========================================
@@ -297,47 +329,46 @@ formJornada.addEventListener('submit', function(event) {
 // ==========================================
 function renderizarInforme() {
     const historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
-    const perfilGuardado = JSON.parse(localStorage.getItem('wtc_perfil')) || { nombre: 'Usuario', moneda: '' };
-    const contenedorTotales = document.getElementById('resumen-totales');
-    const contenedorTabla = document.getElementById('tabla-informe');
+    const perfil = JSON.parse(localStorage.getItem('wtc_perfil')) || { nombre: 'Usuario', moneda: '' };
+    const contTotales = document.getElementById('resumen-totales');
+    const contTabla = document.getElementById('tabla-informe');
     
-    document.getElementById('reporte-perfil').textContent = `Trabajador: ${perfilGuardado.nombre || 'No especificado'}`;
+    document.getElementById('reporte-perfil').textContent = `Trabajador: ${perfil.nombre || 'No especificado'}`;
 
     if (historial.length === 0) {
-        contenedorTotales.innerHTML = '';
-        contenedorTabla.innerHTML = '<p style="text-align:center; color: var(--text-muted);">No hay datos para el informe.</p>';
+        contTotales.innerHTML = '';
+        contTabla.innerHTML = '<p style="text-align:center; color: var(--text-muted);">No hay datos para el informe.</p>';
         return;
     }
 
-    let totalHoras = 0;
-    let totalDinero = 0;
-    let htmlTabla = '';
+    let totalHoras = 0; let totalDinero = 0; let htmlTabla = '';
 
     for (const j of historial) {
         totalHoras += parseFloat(j.horasTrabajadas);
         totalDinero += parseFloat(j.totalEstimado);
         
-        let festivoMarca = j.esFestivo ? '*' : '';
+        let festivoMarca = (j.tipoFestivo && j.tipoFestivo !== 'none') ? '*' : '';
+        let fechaVis = j.fechaMostrar || j.fecha;
 
         htmlTabla += `
             <div class="reporte-item">
                 <div>
-                    <strong>${j.fecha}</strong> ${festivoMarca}<br>
+                    <strong>${fechaVis}</strong> ${festivoMarca}<br>
                     <span style="color: gray; font-size: 0.8rem;">${j.inicio} - ${j.fin}</span>
                 </div>
                 <div style="text-align: right;">
                     ${j.horasTrabajadas} hrs<br>
-                    <strong>${perfilGuardado.moneda} ${j.totalEstimado}</strong>
+                    <strong>${perfil.moneda} ${j.totalEstimado}</strong>
                 </div>
             </div>
         `;
     }
 
-    contenedorTotales.innerHTML = `
+    contTotales.innerHTML = `
         <div><span class="material-symbols-rounded">schedule</span><br>Total Horas<span>${totalHoras.toFixed(2)}</span></div>
-        <div><span class="material-symbols-rounded">payments</span><br>Total Ingresos<span>${perfilGuardado.moneda} ${totalDinero.toFixed(2)}</span></div>
+        <div><span class="material-symbols-rounded">payments</span><br>Total Ingresos<span>${perfil.moneda} ${totalDinero.toFixed(2)}</span></div>
     `;
-    contenedorTabla.innerHTML = htmlTabla;
+    contTabla.innerHTML = htmlTabla;
 }
 
 window.descargarPDF = function() {
@@ -348,13 +379,7 @@ window.descargarPDF = function() {
     // @ts-ignore
     btn.innerHTML = '<span class="material-symbols-rounded">hourglass_top</span> Generando...';
 
-    const opt = {
-        margin:       15,
-        filename:     'Reporte_WorkingTime.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+    const opt = { margin: 15, filename: 'Reporte_WorkingTime.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }};
 
     // @ts-ignore
     html2pdf().set(opt).from(elemento).toPdf().output('datauristring').then(function (pdfDataUri) {
@@ -362,34 +387,20 @@ window.descargarPDF = function() {
             // @ts-ignore
             if (window.NativeShare) {
                 const base64Data = pdfDataUri.split(',')[1];
-                const nombreArchivo = "Reporte_WorkingTime_" + Date.now() + ".pdf";
-                
+                const nombre = "Reporte_WorkingTime_" + Date.now() + ".pdf";
                 // @ts-ignore
-                window.NativeShare(base64Data, nombreArchivo).then(() => {
-                    // @ts-ignore
-                    btn.innerHTML = originalText;
-                }).catch(err => {
-                    console.log(err);
-                    // @ts-ignore
-                    btn.innerHTML = originalText;
-                });
+                window.NativeShare(base64Data, nombre).then(() => { // @ts-ignore
+                    btn.innerHTML = originalText; }).catch(err => { console.log(err); // @ts-ignore
+                    btn.innerHTML = originalText; });
             } else {
                 // @ts-ignore
-                html2pdf().set(opt).from(elemento).save().then(() => {
-                    // @ts-ignore
-                    btn.innerHTML = originalText;
-                });
+                html2pdf().set(opt).from(elemento).save().then(() => { // @ts-ignore
+                    btn.innerHTML = originalText; });
             }
-        } catch (error) {
-            alert('Error al procesar: ' + error);
-            // @ts-ignore
-            btn.innerHTML = originalText;
-        }
-    }).catch(function(err) {
-        alert('Error fatal de PDF: ' + err);
-        // @ts-ignore
-        btn.innerHTML = originalText;
-    });
+        } catch (error) { alert('Error: ' + error); // @ts-ignore
+        btn.innerHTML = originalText; }
+    }).catch(function(err) { alert('Error PDF: ' + err); // @ts-ignore
+    btn.innerHTML = originalText; });
 };
 
 cargarPerfil();
