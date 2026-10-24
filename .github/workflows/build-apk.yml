@@ -24,7 +24,7 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Preparar Capacitor e inyectar plugins
+      - name: Preparar Capacitor e inyectar puente nativo
         run: |
           mkdir www
           cp index.html www/
@@ -32,16 +32,33 @@ jobs:
           cp -r js www/
           
           npm init -y
-          # 1. Instalamos los plugins nativos
-          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/assets@latest @capacitor/filesystem@latest @capacitor/share@latest
+          # Instalar herramientas y plugins
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/assets@latest @capacitor/filesystem@latest @capacitor/share@latest esbuild
           
-          # 2. Extraemos los scripts nativos
-          cp node_modules/@capacitor/core/dist/capacitor.js www/js/
-          cp node_modules/@capacitor/filesystem/dist/plugin.js www/js/capacitor-filesystem.js
-          cp node_modules/@capacitor/share/dist/plugin.js www/js/capacitor-share.js
+          # Crear el puente de comunicación entre la Web y Android
+          cat << 'EOF' > native-bridge.js
+          import { Filesystem, Directory } from '@capacitor/filesystem';
+          import { Share } from '@capacitor/share';
+          window.NativeShare = async function(base64Data, filename) {
+              const result = await Filesystem.writeFile({
+                  path: filename,
+                  data: base64Data,
+                  directory: Directory.Cache
+              });
+              await Share.share({
+                  title: 'Reporte de Horas',
+                  text: 'Adjunto mis jornadas laborales.',
+                  url: result.uri,
+                  dialogTitle: 'Compartir o Guardar PDF'
+              });
+          };
+          EOF
           
-          # 3. Los inyectamos en tu index.html silenciosamente
-          sed -i 's|<script src="./js/app.js"></script>|<script src="./js/capacitor.js"></script><script src="./js/capacitor-filesystem.js"></script><script src="./js/capacitor-share.js"></script><script src="./js/app.js"></script>|g' www/index.html
+          # Empaquetar el puente
+          npx esbuild native-bridge.js --bundle --outfile=www/js/native-bridge.js
+          
+          # Inyectarlo en tu HTML
+          sed -i 's|<script src="./js/app.js"></script>|<script src="./js/native-bridge.js"></script><script src="./js/app.js"></script>|g' www/index.html
           
           npx cap init "Working Time" "com.workingtime.app" --web-dir www
           npx cap add android
