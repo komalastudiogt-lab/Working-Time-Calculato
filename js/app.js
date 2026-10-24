@@ -16,12 +16,22 @@ function switchScreen(targetId, navIndex) {
     }
 }
 
-navItems.forEach((item, index) => {
+navItems.forEach(item => {
     item.addEventListener('click', () => {
-        const screenIds = ['view-inicio', 'view-jornadas', 'view-informes', 'view-perfil'];
-        switchScreen(screenIds[index], index);
+        // @ts-ignore
+        const targetId = item.getAttribute('data-target');
+        // @ts-ignore
+        const index = parseInt(item.getAttribute('data-index'));
+        switchScreen(targetId, index);
     });
 });
+
+const fechaDash = document.getElementById('fecha-dashboard');
+if (fechaDash) {
+    const opciones = { weekday: 'short', day: 'numeric', month: 'short' };
+    // @ts-ignore
+    fechaDash.textContent = new Date().toLocaleDateString('es-ES', opciones);
+}
 
 // ==========================================
 // 2. LÓGICA DEL PERFIL
@@ -70,39 +80,34 @@ function cargarPerfil() {
 }
 
 // ==========================================
-// 3. LÓGICA DE LA PANTALLA INICIO (HISTORIAL Y CALCULADORA)
+// 3. LÓGICA DE LA PANTALLA INICIO
 // ==========================================
 function renderizarInicio() {
     const contenedor = document.getElementById('inicio-lista-jornadas');
     const historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
     const perfilGuardado = JSON.parse(localStorage.getItem('wtc_perfil')) || { moneda: 'Q' };
 
-    // Referencias a la nueva calculadora
     const txtTotalDinero = document.getElementById('inicio-total-dinero');
     const txtTotalHoras = document.getElementById('inicio-total-horas');
 
     let sumaTotalDinero = 0;
     let sumaTotalHoras = 0;
 
-    // Si no hay historial, poner en ceros
     if (historial.length === 0) {
-        contenedor.innerHTML = '<p style="color: var(--color-arena); margin-top: 10px;">No hay jornadas registradas.</p>';
+        contenedor.innerHTML = '<p style="color: #64748b; text-align: center; margin-top: 20px;">No hay transacciones.</p>';
         if(txtTotalDinero) txtTotalDinero.textContent = `${perfilGuardado.moneda} 0.00`;
-        if(txtTotalHoras) txtTotalHoras.textContent = `0.00 hrs en total`;
+        if(txtTotalHoras) txtTotalHoras.textContent = `0.00 hrs acumuladas`;
         return;
     }
 
-    // Calcular totales leyendo cada jornada
     for (const j of historial) {
         sumaTotalDinero += parseFloat(j.totalEstimado || 0);
         sumaTotalHoras += parseFloat(j.horasTrabajadas || 0);
     }
 
-    // Actualizar la interfaz de la calculadora superior
     if(txtTotalDinero) txtTotalDinero.textContent = `${perfilGuardado.moneda} ${sumaTotalDinero.toFixed(2)}`;
-    if(txtTotalHoras) txtTotalHoras.textContent = `${sumaTotalHoras.toFixed(2)} hrs en total`;
+    if(txtTotalHoras) txtTotalHoras.textContent = `${sumaTotalHoras.toFixed(2)} hrs acumuladas`;
 
-    // Renderizar la lista
     const historialInvertido = [...historial].reverse();
     contenedor.innerHTML = ''; 
 
@@ -110,20 +115,19 @@ function renderizarInicio() {
         const item = document.createElement('div');
         item.className = 'jornada-item';
         
-        let festivoHTML = jornada.esFestivo ? `<span class="etiqueta-festivo">FESTIVO</span>` : '';
-        let notasHTML = jornada.notas ? `<br><em>Nota: ${jornada.notas}</em>` : '';
+        let subTexto = jornada.esFestivo ? "Día Festivo" : (jornada.notas ? jornada.notas : "Jornada Regular");
 
         item.innerHTML = `
-            <div class="jornada-header">
-                <span>${jornada.fecha}</span>
-                <span>${jornada.horasTrabajadas} hrs</span>
+            <div class="jornada-icon">
+                <span class="material-symbols-rounded">work_history</span>
             </div>
-            <div class="jornada-body">
-                🕒 ${jornada.inicio} - ${jornada.fin} (Pausa: ${jornada.pausaMinutos}m) ${festivoHTML}
-                ${notasHTML}
+            <div class="jornada-info">
+                <h4>${jornada.fecha}</h4>
+                <p>${jornada.inicio} - ${jornada.fin} | ${subTexto}</p>
             </div>
-            <div class="jornada-total">
-                Total: ${jornada.moneda} ${jornada.totalEstimado}
+            <div class="jornada-amount">
+                <h4>${jornada.moneda} ${jornada.totalEstimado}</h4>
+                <p>+${jornada.horasTrabajadas}h</p>
             </div>
         `;
         contenedor.appendChild(item);
@@ -131,7 +135,7 @@ function renderizarInicio() {
 }
 
 // ==========================================
-// 4. LÓGICA DE REGISTRO DE JORNADAS
+// 4. LÓGICA DE REGISTRO
 // ==========================================
 const formJornada = document.getElementById('form-jornada');
 
@@ -198,7 +202,7 @@ formJornada.addEventListener('submit', function(event) {
     historialJornadas.push(nuevaJornada);
     localStorage.setItem('wtc_jornadas', JSON.stringify(historialJornadas));
 
-    alert(`¡Jornada guardada!\nHoras netas: ${horasTrabajadas.toFixed(2)} hrs\nTotal estimado: ${perfilGuardado.moneda} ${totalEstimado.toFixed(2)}`);
+    alert(`¡Turno registrado!\nTotal sumado: ${perfilGuardado.moneda} ${totalEstimado.toFixed(2)}`);
     
     // @ts-ignore
     document.getElementById('jornada-inicio').value = '';
@@ -217,7 +221,7 @@ formJornada.addEventListener('submit', function(event) {
 });
 
 // ==========================================
-// 5. LÓGICA DE INFORMES Y PDF (PUENTE NATIVO)
+// 5. LÓGICA DE INFORMES Y PDF
 // ==========================================
 function renderizarInforme() {
     const historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
@@ -229,7 +233,7 @@ function renderizarInforme() {
 
     if (historial.length === 0) {
         contenedorTotales.innerHTML = '';
-        contenedorTabla.innerHTML = '<p style="text-align:center; color: var(--color-arena);">No hay datos para el informe.</p>';
+        contenedorTabla.innerHTML = '<p style="text-align:center; color: var(--text-muted);">No hay datos para el informe.</p>';
         return;
     }
 
@@ -247,7 +251,7 @@ function renderizarInforme() {
             <div class="reporte-item">
                 <div>
                     <strong>${j.fecha}</strong> ${festivoMarca}<br>
-                    <span style="color: gray;">${j.inicio} - ${j.fin}</span>
+                    <span style="color: gray; font-size: 0.8rem;">${j.inicio} - ${j.fin}</span>
                 </div>
                 <div style="text-align: right;">
                     ${j.horasTrabajadas} hrs<br>
@@ -258,8 +262,8 @@ function renderizarInforme() {
     }
 
     contenedorTotales.innerHTML = `
-        <div>Total Horas: <br><span style="font-size:1.2rem;">${totalHoras.toFixed(2)}</span></div>
-        <div style="text-align:right;">Total Ingresos: <br><span style="font-size:1.2rem;">${perfilGuardado.moneda} ${totalDinero.toFixed(2)}</span></div>
+        <div><span class="material-symbols-rounded">schedule</span><br>Total Horas<span>${totalHoras.toFixed(2)}</span></div>
+        <div><span class="material-symbols-rounded">payments</span><br>Total Ingresos<span>${perfilGuardado.moneda} ${totalDinero.toFixed(2)}</span></div>
     `;
     contenedorTabla.innerHTML = htmlTabla;
 }
@@ -268,9 +272,9 @@ window.descargarPDF = function() {
     const elemento = document.getElementById('reporte-contenido');
     const btn = document.querySelector('button[onclick="descargarPDF()"]');
     // @ts-ignore
-    const originalText = btn.innerText;
+    const originalText = btn.innerHTML;
     // @ts-ignore
-    btn.innerText = "Generando PDF...";
+    btn.innerHTML = '<span class="material-symbols-rounded">hourglass_top</span> Generando...';
 
     const opt = {
         margin:       15,
@@ -291,35 +295,31 @@ window.descargarPDF = function() {
                 // @ts-ignore
                 window.NativeShare(base64Data, nombreArchivo).then(() => {
                     // @ts-ignore
-                    btn.innerText = originalText;
+                    btn.innerHTML = originalText;
                 }).catch(err => {
                     console.log(err);
                     // @ts-ignore
-                    btn.innerText = originalText;
+                    btn.innerHTML = originalText;
                 });
             } else {
                 // @ts-ignore
                 html2pdf().set(opt).from(elemento).save().then(() => {
                     // @ts-ignore
-                    btn.innerText = originalText;
+                    btn.innerHTML = originalText;
                 });
             }
         } catch (error) {
             alert('Error al procesar: ' + error);
             // @ts-ignore
-            btn.innerText = originalText;
+            btn.innerHTML = originalText;
         }
     }).catch(function(err) {
         alert('Error fatal de PDF: ' + err);
         // @ts-ignore
-        btn.innerText = originalText;
+        btn.innerHTML = originalText;
     });
 };
 
-// ==========================================
-// INICIALIZACIÓN
-// ==========================================
 cargarPerfil();
 renderizarInicio();
 renderizarInforme();
-                        
