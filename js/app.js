@@ -250,7 +250,7 @@ function renderizarInforme() {
     contenedorTabla.innerHTML = htmlTabla;
 }
 
-/** Exportar a PDF (Llamada desde el HTML) */
+/** Exportar a PDF usando el menú de compartir de Android */
 window.descargarPDF = function() {
     const elemento = document.getElementById('reporte-contenido');
     
@@ -262,8 +262,30 @@ window.descargarPDF = function() {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
+    // 1. Generamos el PDF temporalmente en la memoria (como Blob)
     // @ts-ignore
-    html2pdf().set(opt).from(elemento).save();
+    html2pdf().set(opt).from(elemento).output('blob').then(function (pdfBlob) {
+        try {
+            // 2. Preparamos el archivo
+            const file = new File([pdfBlob], "Reporte_WorkingTime.pdf", { type: 'application/pdf' });
+            
+            // 3. Si Android soporta el menú de compartir nativo, lo abrimos
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    files: [file],
+                    title: 'Mi Reporte de Horas',
+                    text: 'Adjunto el reporte de mis jornadas laborales.'
+                }).catch(err => console.log('El usuario canceló compartir.', err));
+            } else {
+                // 4. Fallback: si falla o estamos en web, forzamos la descarga clásica
+                // @ts-ignore
+                html2pdf().set(opt).from(elemento).save();
+            }
+        } catch (error) {
+            // @ts-ignore
+            html2pdf().set(opt).from(elemento).save();
+        }
+    });
 };
 
 // ==========================================
