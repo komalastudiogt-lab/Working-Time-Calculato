@@ -62,12 +62,12 @@
                     <h2 class="section-title">Registrar Jornada</h2>
                     <form id="form-jornada">
                         
-                        <!-- NUEVO: Input de fecha bloqueado y conectado a nuestro calendario -->
+                        <!-- NUEVO: Input bloqueado conectado a nuestro calendario custom -->
                         <div class="form-group">
                             <label>Fecha de Entrada</label>
                             <div class="input-wrapper">
                                 <span class="material-symbols-rounded">calendar_month</span>
-                                <input type="text" id="jornada-fecha" class="form-control" placeholder="AAAA-MM-DD" required readonly onclick="openDatePicker()">
+                                <input type="text" id="jornada-fecha" class="form-control" placeholder="YYYY-MM-DD" required readonly onclick="openDatePicker()">
                             </div>
                         </div>
                         
@@ -204,22 +204,22 @@
         </div>
     </nav>
 
-    <!-- NUEVO: Modal del Calendario -->
+    <!-- NUEVO: Modal de Calendario -->
     <div id="date-picker-modal" class="modal-overlay">
-        <div class="time-picker-card" style="width: 340px; padding: 20px;">
-            <div class="calendar-header">
-                <button type="button" class="icon-btn" onclick="changeMonth(-1)"><span class="material-symbols-rounded">chevron_left</span></button>
-                <h3 id="calendar-month-year" style="margin:0; font-size: 1.1rem;">Mes Año</h3>
-                <button type="button" class="icon-btn" onclick="changeMonth(1)"><span class="material-symbols-rounded">chevron_right</span></button>
+        <div class="date-picker-card">
+            <div class="dp-header">
+                <button type="button" onclick="changeMonth(-1)"><span class="material-symbols-rounded">chevron_left</span></button>
+                <h3 id="dp-month-year">Mes Año</h3>
+                <button type="button" onclick="changeMonth(1)"><span class="material-symbols-rounded">chevron_right</span></button>
             </div>
-            <div class="calendar-weekdays">
-                <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
+            <div class="dp-weekdays">
+                <span>Do</span><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span>
             </div>
-            <div class="calendar-days" id="calendar-days-grid">
-                <!-- JavaScript inyectará los días aquí -->
+            <div class="dp-days" id="dp-days-grid">
+                <!-- Se inyecta por JS -->
             </div>
             <div class="time-picker-actions" style="margin-top: 15px;">
-                <button type="button" class="btn-cancel" onclick="closeDatePicker()">Cancelar</button>
+                <button class="btn-cancel" onclick="closeDatePicker()">Cancelar</button>
             </div>
         </div>
     </div>
@@ -234,13 +234,19 @@
                 <div class="time-column" id="tp-minutes"></div>
             </div>
             <div class="time-picker-actions">
-                <button type="button" class="btn-cancel" onclick="closeTimePicker()">Cancelar</button>
-                <button type="button" class="btn-confirm" onclick="confirmTimePicker()">Establecer</button>
+                <button class="btn-cancel" onclick="closeTimePicker()">Cancelar</button>
+                <button class="btn-confirm" onclick="confirmTimePicker()">Establecer</button>
             </div>
         </div>
     </div>
 
-    <!-- Burbuja de Notificación -->
     <div id="custom-toast" class="toast-hidden">
-        <span class
-            
+        <span class="material-symbols-rounded" id="toast-icon">check_circle</span>
+        <span id="toast-message">Mensaje</span>
+    </div>
+
+    <script src="./js/native-bridge.js"></script>
+    <script src="./js/app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</body>
+</html>
