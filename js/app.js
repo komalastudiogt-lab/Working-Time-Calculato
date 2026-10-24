@@ -49,6 +49,7 @@ formPerfil.addEventListener('submit', function(event) {
 
     localStorage.setItem('wtc_perfil', JSON.stringify(perfil));
     alert('¡Perfil guardado correctamente!');
+    renderizarInicio(); 
     renderizarInforme();
 });
 
@@ -69,21 +70,43 @@ function cargarPerfil() {
 }
 
 // ==========================================
-// 3. LÓGICA DE LA PANTALLA INICIO (HISTORIAL)
+// 3. LÓGICA DE LA PANTALLA INICIO (HISTORIAL Y CALCULADORA)
 // ==========================================
 function renderizarInicio() {
     const contenedor = document.getElementById('inicio-lista-jornadas');
     const historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
+    const perfilGuardado = JSON.parse(localStorage.getItem('wtc_perfil')) || { moneda: 'Q' };
 
+    // Referencias a la nueva calculadora
+    const txtTotalDinero = document.getElementById('inicio-total-dinero');
+    const txtTotalHoras = document.getElementById('inicio-total-horas');
+
+    let sumaTotalDinero = 0;
+    let sumaTotalHoras = 0;
+
+    // Si no hay historial, poner en ceros
     if (historial.length === 0) {
         contenedor.innerHTML = '<p style="color: var(--color-arena); margin-top: 10px;">No hay jornadas registradas.</p>';
+        if(txtTotalDinero) txtTotalDinero.textContent = `${perfilGuardado.moneda} 0.00`;
+        if(txtTotalHoras) txtTotalHoras.textContent = `0.00 hrs en total`;
         return;
     }
 
+    // Calcular totales leyendo cada jornada
+    for (const j of historial) {
+        sumaTotalDinero += parseFloat(j.totalEstimado || 0);
+        sumaTotalHoras += parseFloat(j.horasTrabajadas || 0);
+    }
+
+    // Actualizar la interfaz de la calculadora superior
+    if(txtTotalDinero) txtTotalDinero.textContent = `${perfilGuardado.moneda} ${sumaTotalDinero.toFixed(2)}`;
+    if(txtTotalHoras) txtTotalHoras.textContent = `${sumaTotalHoras.toFixed(2)} hrs en total`;
+
+    // Renderizar la lista
     const historialInvertido = [...historial].reverse();
     contenedor.innerHTML = ''; 
 
-    historialInvertido.forEach(jornada => {
+    for (const jornada of historialInvertido) {
         const item = document.createElement('div');
         item.className = 'jornada-item';
         
@@ -104,7 +127,7 @@ function renderizarInicio() {
             </div>
         `;
         contenedor.appendChild(item);
-    });
+    }
 }
 
 // ==========================================
@@ -241,7 +264,6 @@ function renderizarInforme() {
     contenedorTabla.innerHTML = htmlTabla;
 }
 
-/** Exportar a PDF usando el Puente Nativo de Capacitor */
 window.descargarPDF = function() {
     const elemento = document.getElementById('reporte-contenido');
     const btn = document.querySelector('button[onclick="descargarPDF()"]');
@@ -263,7 +285,6 @@ window.descargarPDF = function() {
         try {
             // @ts-ignore
             if (window.NativeShare) {
-                // 1. MODO APP NATIVA: Llamar al puente construido por GitHub Actions
                 const base64Data = pdfDataUri.split(',')[1];
                 const nombreArchivo = "Reporte_WorkingTime_" + Date.now() + ".pdf";
                 
@@ -277,7 +298,6 @@ window.descargarPDF = function() {
                     btn.innerText = originalText;
                 });
             } else {
-                // 2. MODO WEB (Navegador)
                 // @ts-ignore
                 html2pdf().set(opt).from(elemento).save().then(() => {
                     // @ts-ignore
@@ -302,3 +322,4 @@ window.descargarPDF = function() {
 cargarPerfil();
 renderizarInicio();
 renderizarInforme();
+                        
