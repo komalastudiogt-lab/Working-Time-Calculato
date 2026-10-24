@@ -1,85 +1,134 @@
-name: Compilar APK Android
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Working Time</title>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch: 
+    <header>
+        <h1>Working Time</h1>
+    </header>
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    <main id="app-content">
+        
+        <!-- PANTALLA: INICIO -->
+        <section id="view-inicio" class="screen active">
+            
+            <!-- NUEVO: Tarjeta de Calculadora Automática (Total Acumulado) -->
+            <div class="card" style="background-color: var(--color-verde-salvia); text-align: center; border-radius: 12px; margin-bottom: 15px; padding: 25px 20px;">
+                <h3 style="font-weight: 500; font-size: 1rem; color: white; opacity: 0.9;">Total Acumulado</h3>
+                <h2 id="inicio-total-dinero" style="font-size: 2.5rem; margin: 5px 0; color: white;">Q 0.00</h2>
+                <p id="inicio-total-horas" style="font-size: 0.9rem; color: white; opacity: 0.9;">0.00 hrs en total</p>
+            </div>
 
-    steps:
-      - name: Descargar el código
-        uses: actions/checkout@v4
+            <!-- Lista de Historial -->
+            <div class="card" style="text-align: center;">
+                <h2 style="margin-bottom: 10px;">Historial de Jornadas</h2>
+                
+                <div id="inicio-lista-jornadas">
+                    <p style="color: var(--color-arena); margin-top: 10px;">No hay jornadas registradas.</p>
+                </div>
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+                <button class="btn" style="margin-top: 20px;" onclick="switchScreen('view-jornadas', 1)">+ Nueva Jornada</button>
+            </div>
+        </section>
 
-      - name: Configurar Java (JDK 21)
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '21'
+        <!-- PANTALLA: JORNADAS -->
+        <section id="view-jornadas" class="screen">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">Registrar Jornada</h2>
+                <form id="form-jornada">
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" id="jornada-fecha" class="form-control" required>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Entrada</label>
+                            <input type="time" id="jornada-inicio" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Salida</label>
+                            <input type="time" id="jornada-fin" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Pausa no remunerada (minutos)</label>
+                        <input type="number" id="jornada-pausa" class="form-control" value="0" min="0">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 10px; padding: 10px 0;">
+                        <input type="checkbox" id="jornada-festivo" style="width: 22px; height: 22px; accent-color: var(--color-verde-salvia);">
+                        <label style="margin-bottom: 0;">Aplicar recargo festivo</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones (opcional)</label>
+                        <input type="text" id="jornada-notas" class="form-control" placeholder="Ej. Turno extra">
+                    </div>
+                    <button type="submit" class="btn">Guardar Jornada</button>
+                </form>
+            </div>
+        </section>
 
-      - name: Preparar Capacitor e inyectar puente nativo
-        run: |
-          mkdir www
-          cp index.html www/
-          cp -r css www/
-          cp -r js www/
-          
-          npm init -y
-          # Instalar herramientas y plugins
-          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/assets@latest @capacitor/filesystem@latest @capacitor/share@latest esbuild
-          
-          # Crear el puente de comunicación entre la Web y Android
-          cat << 'EOF' > native-bridge.js
-          import { Filesystem, Directory } from '@capacitor/filesystem';
-          import { Share } from '@capacitor/share';
-          window.NativeShare = async function(base64Data, filename) {
-              const result = await Filesystem.writeFile({
-                  path: filename,
-                  data: base64Data,
-                  directory: Directory.Cache
-              });
-              await Share.share({
-                  title: 'Reporte de Horas',
-                  text: 'Adjunto mis jornadas laborales.',
-                  url: result.uri,
-                  dialogTitle: 'Compartir o Guardar PDF'
-              });
-          };
-          EOF
-          
-          # Empaquetar el puente
-          npx esbuild native-bridge.js --bundle --outfile=www/js/native-bridge.js
-          
-          # Inyectarlo en tu HTML
-          sed -i 's|<script src="./js/app.js"></script>|<script src="./js/native-bridge.js"></script><script src="./js/app.js"></script>|g' www/index.html
-          
-          npx cap init "Working Time" "com.workingtime.app" --web-dir www
-          npx cap add android
-          
-          mkdir assets
-          if [ -f "icon.png" ]; then
-            mv icon.png assets/icon.png
-            npx @capacitor/assets generate --android
-          fi
+        <!-- PANTALLA: INFORMES -->
+        <section id="view-informes" class="screen">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">Generar Informe</h2>
+                
+                <div id="reporte-contenido">
+                    <h3 style="text-align: center; margin-bottom: 15px; color: var(--color-grafito);">Reporte de Horas</h3>
+                    <p id="reporte-perfil" style="text-align: center; font-size: 0.9rem; margin-bottom: 20px;"></p>
+                    
+                    <div id="resumen-totales" style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: var(--color-verde-salvia); border-bottom: 2px solid var(--color-verde-salvia); padding-bottom: 10px;">
+                    </div>
+                    
+                    <div id="tabla-informe">
+                    </div>
+                </div>
 
-          npx cap sync android
+                <button class="btn" style="margin-top: 20px; background-color: var(--color-arena);" onclick="descargarPDF()">Descargar PDF</button>
+            </div>
+        </section>
 
-      - name: Compilar el APK con Gradle
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
+        <!-- PANTALLA: PERFIL -->
+        <section id="view-perfil" class="screen">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">Datos Laborales</h2>
+                <form id="form-perfil">
+                    <div class="form-group">
+                        <label>Nombre o Alias</label>
+                        <input type="text" id="perfil-nombre" class="form-control" placeholder="Ej. Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label>Moneda</label>
+                        <input type="text" id="perfil-moneda" class="form-control" placeholder="Ej. Q o $">
+                    </div>
+                    <div class="form-group">
+                        <label>Tarifa habitual por hora</label>
+                        <input type="number" id="perfil-tarifa" class="form-control" placeholder="Ej. 15.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Recargo festivo predeterminado (%)</label>
+                        <input type="number" id="perfil-festivo" class="form-control" placeholder="Ej. 100" value="100">
+                    </div>
+                    <button type="submit" class="btn">Guardar Perfil</button>
+                </form>
+            </div>
+        </section>
 
-      - name: Guardar el APK generado
-        uses: actions/upload-artifact@v4
-        with:
-          name: WorkingTime-App-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          
+    </main>
+
+    <nav>
+        <div class="nav-item active">Inicio</div>
+        <div class="nav-item">Jornadas</div>
+        <div class="nav-item">Informes</div>
+        <div class="nav-item">Perfil</div>
+    </nav>
+
+    <script src="./js/native-bridge.js"></script>
+    <script src="./js/app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</body>
+</html>
