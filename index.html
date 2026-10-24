@@ -19,6 +19,7 @@
 
     <main id="app-content">
         
+        <!-- PANTALLA: INICIO -->
         <section id="view-inicio" class="screen active">
             <div class="dashboard-padding">
                 <div class="card main-card">
@@ -56,6 +57,7 @@
             </div>
         </section>
 
+        <!-- PANTALLA: JORNADAS -->
         <section id="view-jornadas" class="screen">
             <div class="dashboard-padding">
                 <div class="form-container">
@@ -68,22 +70,23 @@
                                 <input type="date" id="jornada-fecha" class="form-control" required>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 15px;">
-                            <div class="form-group" style="flex: 1;">
-                                <label>Entrada</label>
-                                <div class="input-wrapper">
-                                    <span class="material-symbols-rounded">schedule</span>
-                                    <input type="time" id="jornada-inicio" class="form-control" required>
-                                </div>
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label>Salida</label>
-                                <div class="input-wrapper">
-                                    <span class="material-symbols-rounded">update</span>
-                                    <input type="time" id="jornada-fin" class="form-control" required>
-                                </div>
+                        
+                        <!-- AQUI ESTÁ LA SOLUCIÓN: Campos apilados verticalmente -->
+                        <div class="form-group">
+                            <label>Entrada</label>
+                            <div class="input-wrapper">
+                                <span class="material-symbols-rounded">schedule</span>
+                                <input type="time" id="jornada-inicio" class="form-control" required>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <label>Salida</label>
+                            <div class="input-wrapper">
+                                <span class="material-symbols-rounded">update</span>
+                                <input type="time" id="jornada-fin" class="form-control" required>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label>Pausa no remunerada (minutos)</label>
                             <div class="input-wrapper">
@@ -108,6 +111,7 @@
             </div>
         </section>
 
+        <!-- PANTALLA: INFORMES -->
         <section id="view-informes" class="screen">
             <div class="dashboard-padding">
                 <div class="form-container">
@@ -134,6 +138,7 @@
             </div>
         </section>
 
+        <!-- PANTALLA: PERFIL -->
         <section id="view-perfil" class="screen">
             <div class="dashboard-padding">
                 <div class="form-container">
