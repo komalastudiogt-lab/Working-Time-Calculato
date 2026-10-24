@@ -80,8 +80,72 @@ function cargarPerfil() {
 }
 
 // ==========================================
-// 3. LÓGICA DE LA PANTALLA INICIO
+// 3. LÓGICA DE LA PANTALLA INICIO (Y EDICIÓN)
 // ==========================================
+let idEditando = null; // Variable para saber si estamos editando
+
+// Función Global para Borrar
+window.eliminarJornada = function(id) {
+    if(confirm("¿Estás seguro de que deseas eliminar este turno permanentemente?")) {
+        let historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
+        historial = historial.filter(j => j.id !== id);
+        localStorage.setItem('wtc_jornadas', JSON.stringify(historial));
+        renderizarInicio();
+        renderizarInforme();
+    }
+};
+
+// Función Global para Preparar la Edición
+window.prepararEdicion = function(id) {
+    const historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
+    const jornada = historial.find(j => j.id === id);
+    if(!jornada) return;
+
+    idEditando = id;
+    
+    // Llenar el formulario con los datos
+    // @ts-ignore
+    document.getElementById('jornada-fecha').value = jornada.fecha;
+    // @ts-ignore
+    document.getElementById('jornada-inicio').value = jornada.inicio;
+    // @ts-ignore
+    document.getElementById('jornada-fin').value = jornada.fin;
+    // @ts-ignore
+    document.getElementById('jornada-pausa').value = jornada.pausaMinutos;
+    // @ts-ignore
+    document.getElementById('jornada-festivo').checked = jornada.esFestivo;
+    // @ts-ignore
+    document.getElementById('jornada-notas').value = jornada.notas || '';
+
+    // Cambiar texto de los botones
+    const btnGuardar = document.getElementById('btn-guardar-jornada');
+    if(btnGuardar) btnGuardar.innerHTML = 'Actualizar Jornada';
+    
+    const btnCancelar = document.getElementById('btn-cancelar-edicion');
+    if(btnCancelar) btnCancelar.style.display = 'flex';
+
+    // Mover a la pestaña de Registro
+    switchScreen('view-jornadas', 1);
+};
+
+// Función Global para Cancelar Edición
+window.cancelarEdicion = function() {
+    idEditando = null;
+    
+    // @ts-ignore
+    document.getElementById('form-jornada').reset();
+    // @ts-ignore
+    document.getElementById('jornada-fecha').valueAsDate = new Date();
+    
+    const btnGuardar = document.getElementById('btn-guardar-jornada');
+    if(btnGuardar) btnGuardar.innerHTML = 'Guardar Jornada';
+    
+    const btnCancelar = document.getElementById('btn-cancelar-edicion');
+    if(btnCancelar) btnCancelar.style.display = 'none';
+    
+    switchScreen('view-inicio', 0);
+};
+
 function renderizarInicio() {
     const contenedor = document.getElementById('inicio-lista-jornadas');
     const historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
@@ -128,6 +192,14 @@ function renderizarInicio() {
             <div class="jornada-amount">
                 <h4>${jornada.moneda} ${jornada.totalEstimado}</h4>
                 <p>+${jornada.horasTrabajadas}h</p>
+            </div>
+            <div class="jornada-actions">
+                <button onclick="prepararEdicion('${jornada.id}')" class="btn-action-sm edit">
+                    <span class="material-symbols-rounded" style="font-size: 18px;">edit</span> Editar
+                </button>
+                <button onclick="eliminarJornada('${jornada.id}')" class="btn-action-sm delete">
+                    <span class="material-symbols-rounded" style="font-size: 18px;">delete</span> Borrar
+                </button>
             </div>
         `;
         contenedor.appendChild(item);
@@ -184,7 +256,7 @@ formJornada.addEventListener('submit', function(event) {
     const totalEstimado = pagoBase + recargoFestivo;
 
     const nuevaJornada = {
-        id: Date.now().toString(), 
+        id: idEditando ? idEditando : Date.now().toString(), // Mantiene el ID si edita
         fecha,
         inicio,
         fin,
@@ -198,26 +270,26 @@ formJornada.addEventListener('submit', function(event) {
         moneda: perfilGuardado.moneda
     };
 
-    let historialJornadas = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
-    historialJornadas.push(nuevaJornada);
-    localStorage.setItem('wtc_jornadas', JSON.stringify(historialJornadas));
-
-    alert(`¡Turno registrado!\nTotal sumado: ${perfilGuardado.moneda} ${totalEstimado.toFixed(2)}`);
+    let historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
     
-    // @ts-ignore
-    document.getElementById('jornada-inicio').value = '';
-    // @ts-ignore
-    document.getElementById('jornada-fin').value = '';
-    // @ts-ignore
-    document.getElementById('jornada-pausa').value = '0';
-    // @ts-ignore
-    document.getElementById('jornada-festivo').checked = false;
-    // @ts-ignore
-    document.getElementById('jornada-notas').value = '';
+    if (idEditando) {
+        // Actualizar registro existente
+        const index = historial.findIndex(j => j.id === idEditando);
+        if(index !== -1) historial[index] = nuevaJornada;
+        alert(`¡Turno actualizado!\nTotal recalculado: ${perfilGuardado.moneda} ${totalEstimado.toFixed(2)}`);
+    } else {
+        // Agregar nuevo
+        historial.push(nuevaJornada);
+        alert(`¡Turno registrado!\nTotal sumado: ${perfilGuardado.moneda} ${totalEstimado.toFixed(2)}`);
+    }
 
+    localStorage.setItem('wtc_jornadas', JSON.stringify(historial));
+
+    // Limpiar y resetear vista
+    // @ts-ignore
+    window.cancelarEdicion();
     renderizarInicio();
     renderizarInforme();
-    switchScreen('view-inicio', 0);
 });
 
 // ==========================================
