@@ -19,7 +19,6 @@
 
     <main id="app-content">
         
-        <!-- PANTALLA INICIO -->
         <section id="view-inicio" class="screen active">
             <div class="dashboard-padding">
                 <div class="card main-card">
@@ -57,7 +56,6 @@
             </div>
         </section>
 
-        <!-- PANTALLA REGISTRO -->
         <section id="view-jornadas" class="screen">
             <div class="dashboard-padding">
                 <div class="form-container">
@@ -70,20 +68,23 @@
                                 <input type="date" id="jornada-fecha" class="form-control" required>
                             </div>
                         </div>
+                        
+                        <!-- NUEVO: Inputs bloqueados conectados a nuestro reloj scroll -->
                         <div class="form-group">
                             <label>Hora de Entrada</label>
                             <div class="input-wrapper">
                                 <span class="material-symbols-rounded">schedule</span>
-                                <input type="time" id="jornada-inicio" class="form-control" required>
+                                <input type="text" id="jornada-inicio" class="form-control" placeholder="00:00" required readonly onclick="openTimePicker('jornada-inicio')">
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Hora de Salida</label>
                             <div class="input-wrapper">
                                 <span class="material-symbols-rounded">update</span>
-                                <input type="time" id="jornada-fin" class="form-control" required>
+                                <input type="text" id="jornada-fin" class="form-control" placeholder="00:00" required readonly onclick="openTimePicker('jornada-fin')">
                             </div>
                         </div>
+                        
                         <div class="form-group">
                             <label>Pausa no remunerada (minutos)</label>
                             <div class="input-wrapper">
@@ -92,7 +93,6 @@
                             </div>
                         </div>
                         
-                        <!-- NUEVO: Menú desplegable inteligente para días festivos -->
                         <div class="form-group">
                             <label>Recargo Festivo</label>
                             <div class="input-wrapper">
@@ -121,7 +121,6 @@
             </div>
         </section>
 
-        <!-- PANTALLA INFORMES -->
         <section id="view-informes" class="screen">
             <div class="dashboard-padding">
                 <div class="form-container">
@@ -144,7 +143,6 @@
             </div>
         </section>
 
-        <!-- PANTALLA PERFIL -->
         <section id="view-perfil" class="screen">
             <div class="dashboard-padding">
                 <div class="form-container">
@@ -204,6 +202,28 @@
             <span>Perfil</span>
         </div>
     </nav>
+
+    <!-- NUEVO: Modal de Rueda de Tiempo (Scroll Picker) -->
+    <div id="time-picker-modal" class="modal-overlay">
+        <div class="time-picker-card">
+            <h3>Seleccionar Hora</h3>
+            <div class="time-picker-columns">
+                <div class="time-column" id="tp-hours"></div>
+                <div class="time-separator">:</div>
+                <div class="time-column" id="tp-minutes"></div>
+            </div>
+            <div class="time-picker-actions">
+                <button class="btn-cancel" onclick="closeTimePicker()">Cancelar</button>
+                <button class="btn-confirm" onclick="confirmTimePicker()">Establecer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUEVO: Burbuja de Notificación Inteligente (Toast) -->
+    <div id="custom-toast" class="toast-hidden">
+        <span class="material-symbols-rounded" id="toast-icon">check_circle</span>
+        <span id="toast-message">Mensaje</span>
+    </div>
 
     <script src="./js/native-bridge.js"></script>
     <script src="./js/app.js"></script>
