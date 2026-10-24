@@ -4,11 +4,6 @@
 const navItems = document.querySelectorAll('.nav-item');
 const screens = document.querySelectorAll('.screen');
 
-/**
- * Función para cambiar de pantalla
- * @param {string} targetId - El ID de la pantalla a mostrar
- * @param {number} navIndex - El índice del botón en la barra
- */
 function switchScreen(targetId, navIndex) {
     screens.forEach(screen => screen.classList.remove('active'));
     navItems.forEach(item => item.classList.remove('active'));
@@ -16,7 +11,6 @@ function switchScreen(targetId, navIndex) {
     document.getElementById(targetId).classList.add('active');
     navItems[navIndex].classList.add('active');
 
-    // Si entramos a Informes, actualizamos los cálculos
     if(targetId === 'view-informes') {
         renderizarInforme();
     }
@@ -114,7 +108,7 @@ function renderizarInicio() {
 }
 
 // ==========================================
-// 4. LÓGICA DE REGISTRO DE JORNADAS Y CÁLCULOS
+// 4. LÓGICA DE REGISTRO DE JORNADAS
 // ==========================================
 const formJornada = document.getElementById('form-jornada');
 
@@ -139,13 +133,11 @@ formJornada.addEventListener('submit', function(event) {
 
     const perfilGuardado = JSON.parse(localStorage.getItem('wtc_perfil')) || { tarifa: 0, festivo: 0, moneda: '' };
     
-    // Motor de cálculo
     let [horaInicio, minInicio] = inicio.split(':').map(Number);
     let [horaFin, minFin] = fin.split(':').map(Number);
     
     let minutosTotales = (horaFin * 60 + minFin) - (horaInicio * 60 + minInicio);
     
-    // Si cruza la medianoche
     if (minutosTotales < 0) {
         minutosTotales += 24 * 60; 
     }
@@ -185,7 +177,6 @@ formJornada.addEventListener('submit', function(event) {
 
     alert(`¡Jornada guardada!\nHoras netas: ${horasTrabajadas.toFixed(2)} hrs\nTotal estimado: ${perfilGuardado.moneda} ${totalEstimado.toFixed(2)}`);
     
-    // Limpiar formulario
     // @ts-ignore
     document.getElementById('jornada-inicio').value = '';
     // @ts-ignore
@@ -203,7 +194,7 @@ formJornada.addEventListener('submit', function(event) {
 });
 
 // ==========================================
-// 5. LÓGICA DE INFORMES Y PDF NATIVO PÚBLICO
+// 5. LÓGICA DE INFORMES Y PDF (PUENTE NATIVO)
 // ==========================================
 function renderizarInforme() {
     const historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
@@ -250,7 +241,7 @@ function renderizarInforme() {
     contenedorTabla.innerHTML = htmlTabla;
 }
 
-/** Exportar a PDF solucionando restricciones de Android de forma limpia */
+/** Exportar a PDF usando el Puente Nativo de Capacitor */
 window.descargarPDF = function() {
     const elemento = document.getElementById('reporte-contenido');
     const btn = document.querySelector('button[onclick="descargarPDF()"]');
@@ -267,49 +258,46 @@ window.descargarPDF = function() {
         jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // Generamos el PDF temporalmente en la memoria
     // @ts-ignore
-    html2pdf().set(opt).from(elemento).output('blob').then(function (pdfBlob) {
+    html2pdf().set(opt).from(elemento).toPdf().output('datauristring').then(function (pdfDataUri) {
         try {
-            // Creamos un archivo válido para compartir
-            const file = new File([pdfBlob], "Reporte_WorkingTime.pdf", { type: 'application/pdf' });
-            
-            // Verificamos si el dispositivo soporta compartir archivos directamente
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({
-                    files: [file],
-                    title: 'Reporte de Horas',
-                    text: 'Adjunto mis jornadas laborales.'
-                }).then(() => {
+            // @ts-ignore
+            if (window.NativeShare) {
+                // 1. MODO APP NATIVA: Llamar al puente construido por GitHub Actions
+                const base64Data = pdfDataUri.split(',')[1];
+                const nombreArchivo = "Reporte_WorkingTime_" + Date.now() + ".pdf";
+                
+                // @ts-ignore
+                window.NativeShare(base64Data, nombreArchivo).then(() => {
                     // @ts-ignore
                     btn.innerText = originalText;
                 }).catch(err => {
-                    console.log('Compartir cancelado', err);
+                    console.log(err);
                     // @ts-ignore
                     btn.innerText = originalText;
                 });
             } else {
-                // Fallback de seguridad si no se puede compartir
+                // 2. MODO WEB (Navegador)
                 // @ts-ignore
-                html2pdf().set(opt).from(elemento).save();
-                setTimeout(() => { 
+                html2pdf().set(opt).from(elemento).save().then(() => {
                     // @ts-ignore
-                    btn.innerText = originalText; 
-                }, 2000);
+                    btn.innerText = originalText;
+                });
             }
         } catch (error) {
+            alert('Error al procesar: ' + error);
             // @ts-ignore
-            html2pdf().set(opt).from(elemento).save();
-            setTimeout(() => { 
-                // @ts-ignore
-                btn.innerText = originalText; 
-            }, 2000);
+            btn.innerText = originalText;
         }
+    }).catch(function(err) {
+        alert('Error fatal de PDF: ' + err);
+        // @ts-ignore
+        btn.innerText = originalText;
     });
 };
 
 // ==========================================
-// INICIALIZACIÓN DE LA APP AL ABRIR
+// INICIALIZACIÓN
 // ==========================================
 cargarPerfil();
 renderizarInicio();
