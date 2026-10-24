@@ -1,0 +1,189 @@
+@import url('variables.css');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--color-fondo);
+  color: var(--color-grafito);
+  height: 100dvh; 
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background-color: var(--color-blanco);
+  padding: 20px;
+  text-align: center;
+  box-shadow: var(--sombra-suave);
+  z-index: 10;
+}
+
+header h1 {
+  color: var(--color-grafito);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* Barra de navegación inferior */
+nav {
+  background-color: var(--color-blanco);
+  display: flex;
+  justify-content: space-around;
+  padding: 15px 0;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  padding-bottom: 15px; 
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--color-arena);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.nav-item.active {
+  color: var(--color-verde-salvia);
+}
+
+/* Control de pantallas */
+.screen {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.screen.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Estilos de Formularios y Tarjetas */
+.card {
+  background-color: var(--color-blanco);
+  border-radius: var(--radio-borde);
+  padding: 20px;
+  box-shadow: var(--sombra-suave);
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: var(--color-grafito);
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: var(--color-fondo);
+  color: var(--color-grafito);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-verde-salvia);
+}
+
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-blanco);
+  background-color: var(--color-verde-salvia);
+  cursor: pointer;
+}
+
+.btn:active {
+  opacity: 0.8;
+}
+
+/* Estilos para la lista de jornadas en Inicio */
+.jornada-item {
+  background-color: var(--color-fondo);
+  border: 1px solid rgba(0,0,0,0.05);
+  border-radius: 8px;
+  padding: 15px;
+  margin-top: 15px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.jornada-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  color: var(--color-verde-salvia);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+}
+
+.jornada-body {
+  font-size: 0.9rem;
+  color: var(--color-grafito);
+}
+
+.jornada-total {
+  font-weight: 700;
+  color: var(--color-arena);
+  margin-top: 5px;
+  font-size: 1.1rem;
+}
+
+.etiqueta-festivo {
+  font-size: 0.7rem;
+  background: var(--color-arena);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 5px;
+}
+
+/* --- NUEVO: Estilos para la vista de Informe y PDF --- */
+#reporte-contenido {
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.reporte-item {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  padding: 10px 0;
+  font-size: 0.85rem;
+}
+
+.reporte-item:last-child {
+  border-bottom: none;
+}
