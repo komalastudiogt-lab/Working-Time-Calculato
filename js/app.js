@@ -11,6 +11,8 @@ function switchScreen(targetId, navIndex) {
     document.getElementById(targetId).classList.add('active');
     navItems[navIndex].classList.add('active');
 
+    // ¡NUEVO SEGURO!: Forzar actualización visual siempre que cambiemos de pestaña
+    if(targetId === 'view-inicio') renderizarInicio();
     if(targetId === 'view-informes') renderizarInforme();
 }
 
@@ -103,12 +105,10 @@ window.prepararEdicion = function(id) {
     // @ts-ignore
     document.getElementById('jornada-pausa').value = jornada.pausaMinutos;
     
-    // Compatibilidad hacia atrás (si editamos una jornada antigua con checkbox)
     const tipoFestivo = jornada.tipoFestivo ? jornada.tipoFestivo : (jornada.esFestivo ? 'all' : 'none');
     // @ts-ignore
     document.getElementById('jornada-tipo-festivo').value = tipoFestivo;
     
-    // El limpiado extrae solo la nota real escrita por el usuario
     let notaReal = jornada.notas || '';
     if(notaReal.includes('|')) notaReal = notaReal.split('|')[1].trim(); 
     // @ts-ignore
@@ -124,10 +124,16 @@ window.prepararEdicion = function(id) {
 
 window.cancelarEdicion = function() {
     idEditando = null;
+    try {
+        // @ts-ignore
+        document.getElementById('form-jornada').reset();
+    } catch(e) {}
+    
+    // Método a prueba de fallos para poner la fecha actual
+    let hoy = new Date();
+    hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
     // @ts-ignore
-    document.getElementById('form-jornada').reset();
-    // @ts-ignore
-    document.getElementById('jornada-fecha').valueAsDate = new Date();
+    document.getElementById('jornada-fecha').value = hoy.toISOString().split('T')[0];
     
     const btnGuardar = document.getElementById('btn-guardar-jornada');
     if(btnGuardar) btnGuardar.innerHTML = 'Guardar Jornada';
@@ -200,11 +206,15 @@ function renderizarInicio() {
 }
 
 // ==========================================
-// 4. EL NUEVO MOTOR DE CÁLCULO DE JORNADAS
+// 4. MOTOR DE CÁLCULO DE JORNADAS
 // ==========================================
 const formJornada = document.getElementById('form-jornada');
+
+// Iniciar con la fecha actual de forma segura
+let hoy = new Date();
+hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
 // @ts-ignore
-document.getElementById('jornada-fecha').valueAsDate = new Date();
+document.getElementById('jornada-fecha').value = hoy.toISOString().split('T')[0];
 
 formJornada.addEventListener('submit', function(event) {
     event.preventDefault();
@@ -231,7 +241,6 @@ formJornada.addEventListener('submit', function(event) {
     let minTotalesDia2 = 0;
     let cruzaMedianoche = false;
 
-    // Detectamos si el turno cruza hacia el siguiente día
     if ((hFin * 60 + mFin) <= (hIni * 60 + mIni) && inicio !== fin) {
         cruzaMedianoche = true;
         minTotalesDia1 = (24 * 60) - (hIni * 60 + mIni);
@@ -242,11 +251,10 @@ formJornada.addEventListener('submit', function(event) {
 
     let minutosTotales = minTotalesDia1 + minTotalesDia2;
     if (minutosTotales === 0 && inicio === fin) {
-        minutosTotales = 24 * 60; // Caso excepcional turno de 24 hrs
+        minutosTotales = 24 * 60; 
         minTotalesDia1 = 24 * 60;
     }
 
-    // Dividir la pausa de almuerzo/café proporcionalmente a las horas de cada día
     let ratio1 = minutosTotales > 0 ? minTotalesDia1 / minutosTotales : 0;
     let ratio2 = minutosTotales > 0 ? minTotalesDia2 / minutosTotales : 0;
     
@@ -256,7 +264,6 @@ formJornada.addEventListener('submit', function(event) {
     let tarifaNormal = perfil.tarifa;
     let multiplicadorFestivo = perfil.festivo / 100;
 
-    // Cálculo fraccionado según selección legal
     let recargo1 = 0;
     let recargo2 = 0;
 
@@ -268,15 +275,14 @@ formJornada.addEventListener('submit', function(event) {
     } else if (tipoFestivo === 'end' && cruzaMedianoche) {
         recargo2 = hrsDia2 * (tarifaNormal * multiplicadorFestivo);
     } else if (tipoFestivo === 'end' && !cruzaMedianoche) {
-        recargo1 = hrsDia1 * (tarifaNormal * multiplicadorFestivo); // Corrección si elige salida sin cruzar media noche
+        recargo1 = hrsDia1 * (tarifaNormal * multiplicadorFestivo); 
     }
 
     let pagoBase = (hrsDia1 + hrsDia2) * tarifaNormal;
     let totalEstimado = pagoBase + recargo1 + recargo2;
     let horasTrabajadas = hrsDia1 + hrsDia2;
 
-    // Generar la etiqueta visual de fecha (Ej: 17 oct al 18 oct)
-    let fObj1 = new Date(fecha + 'T12:00:00'); // Usamos T12 para evitar bugs de zona horaria
+    let fObj1 = new Date(fecha + 'T12:00:00'); 
     let dia1Str = fObj1.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
     let fechaMostrar = dia1Str;
     
@@ -287,7 +293,6 @@ formJornada.addEventListener('submit', function(event) {
         fechaMostrar = `${dia1Str} al ${dia2Str}`;
     }
 
-    // Agregar nota inteligente
     let subTextoNota = 'Normal';
     if(tipoFestivo === 'all') subTextoNota = 'Festivo Completo';
     else if(tipoFestivo === 'start') subTextoNota = 'Festivo (Entrada)';
@@ -298,7 +303,7 @@ formJornada.addEventListener('submit', function(event) {
     const nuevaJornada = {
         id: idEditando ? idEditando : Date.now().toString(),
         fecha: fecha,
-        fechaMostrar: fechaMostrar, // Guardamos la etiqueta de días múltiples
+        fechaMostrar: fechaMostrar, 
         inicio, fin,
         pausaMinutos,
         tipoFestivo: tipoFestivo,
@@ -309,19 +314,28 @@ formJornada.addEventListener('submit', function(event) {
     };
 
     let historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
+    let msjAlerta = "";
     
     if (idEditando) {
         const index = historial.findIndex(j => j.id === idEditando);
         if(index !== -1) historial[index] = nuevaJornada;
-        alert(`¡Turno actualizado!\nTotal recalculado: ${perfil.moneda} ${totalEstimado.toFixed(2)}`);
+        msjAlerta = `¡Turno actualizado!\nTotal recalculado: ${perfil.moneda} ${totalEstimado.toFixed(2)}`;
     } else {
         historial.push(nuevaJornada);
-        alert(`¡Turno guardado correctamente!\nTotal: ${perfil.moneda} ${totalEstimado.toFixed(2)}`);
+        msjAlerta = `¡Turno guardado correctamente!\nTotal: ${perfil.moneda} ${totalEstimado.toFixed(2)}`;
     }
 
+    // 1. GUARDAR EN MEMORIA (Aseguramos que guarde ANTES de que cualquier alerta congele el sistema)
     localStorage.setItem('wtc_jornadas', JSON.stringify(historial));
+    
+    // 2. LIMPIAR INTERFAZ Y REGRESAR AL INICIO INMEDIATAMENTE
     // @ts-ignore
     window.cancelarEdicion();
+
+    // 3. MOSTRAR ALERTA (Con un pequeñísimo retraso para que Android termine sus procesos)
+    setTimeout(() => {
+        alert(msjAlerta);
+    }, 150);
 });
 
 // ==========================================
