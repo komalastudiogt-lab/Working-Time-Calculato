@@ -24,7 +24,7 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Preparar Capacitor e inyectar código
+      - name: Preparar Capacitor e inyectar plugins
         run: |
           mkdir www
           cp index.html www/
@@ -32,10 +32,26 @@ jobs:
           cp -r js www/
           
           npm init -y
-          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+          # 1. Instalamos los plugins nativos
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest @capacitor/assets@latest @capacitor/filesystem@latest @capacitor/share@latest
+          
+          # 2. Extraemos los scripts nativos
+          cp node_modules/@capacitor/core/dist/capacitor.js www/js/
+          cp node_modules/@capacitor/filesystem/dist/plugin.js www/js/capacitor-filesystem.js
+          cp node_modules/@capacitor/share/dist/plugin.js www/js/capacitor-share.js
+          
+          # 3. Los inyectamos en tu index.html silenciosamente
+          sed -i 's|<script src="./js/app.js"></script>|<script src="./js/capacitor.js"></script><script src="./js/capacitor-filesystem.js"></script><script src="./js/capacitor-share.js"></script><script src="./js/app.js"></script>|g' www/index.html
           
           npx cap init "Working Time" "com.workingtime.app" --web-dir www
           npx cap add android
+          
+          mkdir assets
+          if [ -f "icon.png" ]; then
+            mv icon.png assets/icon.png
+            npx @capacitor/assets generate --android
+          fi
+
           npx cap sync android
 
       - name: Compilar el APK con Gradle
