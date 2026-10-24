@@ -1,5 +1,103 @@
 // ==========================================
-// 1. LÓGICA DE NAVEGACIÓN
+// 1. SISTEMA DE NOTIFICACIONES (TOAST)
+// ==========================================
+window.showToast = function(message, icon = 'check_circle') {
+    const toast = document.getElementById('custom-toast');
+    // @ts-ignore
+    document.getElementById('toast-message').innerText = message;
+    // @ts-ignore
+    document.getElementById('toast-icon').innerText = icon;
+    
+    // @ts-ignore
+    toast.className = 'toast-visible';
+    setTimeout(() => {
+        // @ts-ignore
+        toast.className = 'toast-hidden';
+    }, 3500);
+};
+
+// ==========================================
+// 2. RELOJ SCROLL PERSONALIZADO
+// ==========================================
+let currentInputTarget = null;
+
+function initTimePicker() {
+    const colHours = document.getElementById('tp-hours');
+    const colMins = document.getElementById('tp-minutes');
+    
+    let htmlHours = '<div class="time-item empty"></div>';
+    for(let i=0; i<24; i++) {
+        let val = i.toString().padStart(2, '0');
+        htmlHours += `<div class="time-item" data-val="${val}">${val}</div>`;
+    }
+    htmlHours += '<div class="time-item empty"></div>';
+    // @ts-ignore
+    if(colHours) colHours.innerHTML = htmlHours;
+
+    let htmlMins = '<div class="time-item empty"></div>';
+    for(let i=0; i<60; i++) {
+        let val = i.toString().padStart(2, '0');
+        htmlMins += `<div class="time-item" data-val="${val}">${val}</div>`;
+    }
+    htmlMins += '<div class="time-item empty"></div>';
+    // @ts-ignore
+    if(colMins) colMins.innerHTML = htmlMins;
+}
+
+window.openTimePicker = function(inputId) {
+    currentInputTarget = document.getElementById(inputId);
+    const modal = document.getElementById('time-picker-modal');
+    // @ts-ignore
+    modal.classList.add('visible');
+    
+    // @ts-ignore
+    let val = currentInputTarget.value;
+    let h = 0, m = 0;
+    if(val) {
+        [h, m] = val.split(':').map(Number);
+    }
+    
+    const colHours = document.getElementById('tp-hours');
+    const colMins = document.getElementById('tp-minutes');
+    
+    // Girar la ruleta a la hora actual seleccionada
+    // @ts-ignore
+    setTimeout(() => { colHours.scrollTop = h * 50; colMins.scrollTop = m * 50; }, 50);
+};
+
+window.closeTimePicker = function() {
+    const modal = document.getElementById('time-picker-modal');
+    // @ts-ignore
+    modal.classList.remove('visible');
+};
+
+window.confirmTimePicker = function() {
+    const colHours = document.getElementById('tp-hours');
+    const colMins = document.getElementById('tp-minutes');
+    
+    // @ts-ignore
+    let hIdx = Math.round(colHours.scrollTop / 50);
+    // @ts-ignore
+    let mIdx = Math.round(colMins.scrollTop / 50);
+    
+    // Asegurar límites por seguridad
+    if(hIdx > 23) hIdx = 23;
+    if(mIdx > 59) mIdx = 59;
+    
+    let hStr = hIdx.toString().padStart(2, '0');
+    let mStr = mIdx.toString().padStart(2, '0');
+    
+    if (currentInputTarget) {
+        // @ts-ignore
+        currentInputTarget.value = `${hStr}:${mStr}`;
+    }
+    
+    // @ts-ignore
+    window.closeTimePicker();
+};
+
+// ==========================================
+// 3. LÓGICA DE NAVEGACIÓN
 // ==========================================
 const navItems = document.querySelectorAll('.nav-item');
 const screens = document.querySelectorAll('.screen');
@@ -11,7 +109,6 @@ function switchScreen(targetId, navIndex) {
     document.getElementById(targetId).classList.add('active');
     navItems[navIndex].classList.add('active');
 
-    // ¡NUEVO SEGURO!: Forzar actualización visual siempre que cambiemos de pestaña
     if(targetId === 'view-inicio') renderizarInicio();
     if(targetId === 'view-informes') renderizarInforme();
 }
@@ -34,7 +131,7 @@ if (fechaDash) {
 }
 
 // ==========================================
-// 2. LÓGICA DEL PERFIL
+// 4. LÓGICA DEL PERFIL
 // ==========================================
 const formPerfil = document.getElementById('form-perfil');
 
@@ -55,7 +152,11 @@ formPerfil.addEventListener('submit', function(event) {
     };
 
     localStorage.setItem('wtc_perfil', JSON.stringify(perfil));
-    alert('¡Perfil guardado correctamente!');
+    
+    // NUEVA ALERTA ESTÉTICA
+    // @ts-ignore
+    window.showToast('¡Perfil guardado correctamente!', 'verified_user');
+    
     renderizarInicio(); 
     renderizarInforme();
 });
@@ -76,7 +177,7 @@ function cargarPerfil() {
 }
 
 // ==========================================
-// 3. LÓGICA DE LA PANTALLA INICIO Y EDICIÓN
+// 5. LÓGICA DE LA PANTALLA INICIO Y EDICIÓN
 // ==========================================
 let idEditando = null;
 
@@ -86,6 +187,8 @@ window.eliminarJornada = function(id) {
         historial = historial.filter(j => j.id !== id);
         localStorage.setItem('wtc_jornadas', JSON.stringify(historial));
         renderizarInicio(); renderizarInforme();
+        // @ts-ignore
+        window.showToast('Jornada eliminada', 'delete');
     }
 };
 
@@ -124,22 +227,24 @@ window.prepararEdicion = function(id) {
 
 window.cancelarEdicion = function() {
     idEditando = null;
-    try {
-        // @ts-ignore
-        document.getElementById('form-jornada').reset();
-    } catch(e) {}
+    try { // @ts-ignore
+    document.getElementById('form-jornada').reset(); } catch(e) {}
     
-    // Método a prueba de fallos para poner la fecha actual
     let hoy = new Date();
     hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
     // @ts-ignore
     document.getElementById('jornada-fecha').value = hoy.toISOString().split('T')[0];
+    // @ts-ignore
+    document.getElementById('jornada-inicio').value = '';
+    // @ts-ignore
+    document.getElementById('jornada-fin').value = '';
     
     const btnGuardar = document.getElementById('btn-guardar-jornada');
     if(btnGuardar) btnGuardar.innerHTML = 'Guardar Jornada';
     const btnCancelar = document.getElementById('btn-cancelar-edicion');
     if(btnCancelar) btnCancelar.style.display = 'none';
     
+    renderizarInicio(); renderizarInforme();
     switchScreen('view-inicio', 0);
 };
 
@@ -206,11 +311,10 @@ function renderizarInicio() {
 }
 
 // ==========================================
-// 4. MOTOR DE CÁLCULO DE JORNADAS
+// 6. MOTOR DE CÁLCULO DE JORNADAS
 // ==========================================
 const formJornada = document.getElementById('form-jornada');
 
-// Iniciar con la fecha actual de forma segura
 let hoy = new Date();
 hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
 // @ts-ignore
@@ -237,9 +341,7 @@ formJornada.addEventListener('submit', function(event) {
     let [hIni, mIni] = inicio.split(':').map(Number);
     let [hFin, mFin] = fin.split(':').map(Number);
     
-    let minTotalesDia1 = 0;
-    let minTotalesDia2 = 0;
-    let cruzaMedianoche = false;
+    let minTotalesDia1 = 0; let minTotalesDia2 = 0; let cruzaMedianoche = false;
 
     if ((hFin * 60 + mFin) <= (hIni * 60 + mIni) && inicio !== fin) {
         cruzaMedianoche = true;
@@ -250,10 +352,7 @@ formJornada.addEventListener('submit', function(event) {
     }
 
     let minutosTotales = minTotalesDia1 + minTotalesDia2;
-    if (minutosTotales === 0 && inicio === fin) {
-        minutosTotales = 24 * 60; 
-        minTotalesDia1 = 24 * 60;
-    }
+    if (minutosTotales === 0 && inicio === fin) { minutosTotales = 24 * 60; minTotalesDia1 = 24 * 60; }
 
     let ratio1 = minutosTotales > 0 ? minTotalesDia1 / minutosTotales : 0;
     let ratio2 = minutosTotales > 0 ? minTotalesDia2 / minutosTotales : 0;
@@ -261,22 +360,15 @@ formJornada.addEventListener('submit', function(event) {
     let hrsDia1 = Math.max(0, minTotalesDia1 - (pausaMinutos * ratio1)) / 60;
     let hrsDia2 = Math.max(0, minTotalesDia2 - (pausaMinutos * ratio2)) / 60;
 
-    let tarifaNormal = perfil.tarifa;
-    let multiplicadorFestivo = perfil.festivo / 100;
-
-    let recargo1 = 0;
-    let recargo2 = 0;
+    let tarifaNormal = perfil.tarifa; let multiplicadorFestivo = perfil.festivo / 100;
+    let recargo1 = 0; let recargo2 = 0;
 
     if (tipoFestivo === 'all') {
         recargo1 = hrsDia1 * (tarifaNormal * multiplicadorFestivo);
         recargo2 = hrsDia2 * (tarifaNormal * multiplicadorFestivo);
-    } else if (tipoFestivo === 'start') {
-        recargo1 = hrsDia1 * (tarifaNormal * multiplicadorFestivo);
-    } else if (tipoFestivo === 'end' && cruzaMedianoche) {
-        recargo2 = hrsDia2 * (tarifaNormal * multiplicadorFestivo);
-    } else if (tipoFestivo === 'end' && !cruzaMedianoche) {
-        recargo1 = hrsDia1 * (tarifaNormal * multiplicadorFestivo); 
-    }
+    } else if (tipoFestivo === 'start') { recargo1 = hrsDia1 * (tarifaNormal * multiplicadorFestivo);
+    } else if (tipoFestivo === 'end' && cruzaMedianoche) { recargo2 = hrsDia2 * (tarifaNormal * multiplicadorFestivo);
+    } else if (tipoFestivo === 'end' && !cruzaMedianoche) { recargo1 = hrsDia1 * (tarifaNormal * multiplicadorFestivo); }
 
     let pagoBase = (hrsDia1 + hrsDia2) * tarifaNormal;
     let totalEstimado = pagoBase + recargo1 + recargo2;
@@ -287,8 +379,7 @@ formJornada.addEventListener('submit', function(event) {
     let fechaMostrar = dia1Str;
     
     if (cruzaMedianoche) {
-        let fObj2 = new Date(fObj1);
-        fObj2.setDate(fObj2.getDate() + 1);
+        let fObj2 = new Date(fObj1); fObj2.setDate(fObj2.getDate() + 1);
         let dia2Str = fObj2.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
         fechaMostrar = `${dia1Str} al ${dia2Str}`;
     }
@@ -297,20 +388,13 @@ formJornada.addEventListener('submit', function(event) {
     if(tipoFestivo === 'all') subTextoNota = 'Festivo Completo';
     else if(tipoFestivo === 'start') subTextoNota = 'Festivo (Entrada)';
     else if(tipoFestivo === 'end') subTextoNota = 'Festivo (Salida)';
-    
     let notasFinales = notasUsuario ? `${subTextoNota} | ${notasUsuario}` : subTextoNota;
 
     const nuevaJornada = {
         id: idEditando ? idEditando : Date.now().toString(),
-        fecha: fecha,
-        fechaMostrar: fechaMostrar, 
-        inicio, fin,
-        pausaMinutos,
-        tipoFestivo: tipoFestivo,
-        notas: notasFinales,
-        horasTrabajadas: horasTrabajadas.toFixed(2),
-        totalEstimado: totalEstimado.toFixed(2),
-        moneda: perfil.moneda
+        fecha: fecha, fechaMostrar: fechaMostrar, inicio, fin,
+        pausaMinutos, tipoFestivo: tipoFestivo, notas: notasFinales,
+        horasTrabajadas: horasTrabajadas.toFixed(2), totalEstimado: totalEstimado.toFixed(2), moneda: perfil.moneda
     };
 
     let historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
@@ -319,27 +403,22 @@ formJornada.addEventListener('submit', function(event) {
     if (idEditando) {
         const index = historial.findIndex(j => j.id === idEditando);
         if(index !== -1) historial[index] = nuevaJornada;
-        msjAlerta = `¡Turno actualizado!\nTotal recalculado: ${perfil.moneda} ${totalEstimado.toFixed(2)}`;
+        msjAlerta = `¡Turno actualizado!\nTotal: ${perfil.moneda} ${totalEstimado.toFixed(2)}`;
     } else {
         historial.push(nuevaJornada);
-        msjAlerta = `¡Turno guardado correctamente!\nTotal: ${perfil.moneda} ${totalEstimado.toFixed(2)}`;
+        msjAlerta = `¡Turno guardado!\nTotal: ${perfil.moneda} ${totalEstimado.toFixed(2)}`;
     }
 
-    // 1. GUARDAR EN MEMORIA (Aseguramos que guarde ANTES de que cualquier alerta congele el sistema)
     localStorage.setItem('wtc_jornadas', JSON.stringify(historial));
-    
-    // 2. LIMPIAR INTERFAZ Y REGRESAR AL INICIO INMEDIATAMENTE
     // @ts-ignore
     window.cancelarEdicion();
 
-    // 3. MOSTRAR ALERTA (Con un pequeñísimo retraso para que Android termine sus procesos)
-    setTimeout(() => {
-        alert(msjAlerta);
-    }, 150);
+    setTimeout(() => { // @ts-ignore
+    window.showToast(msjAlerta, 'task_alt'); }, 150);
 });
 
 // ==========================================
-// 5. LÓGICA DE INFORMES Y PDF
+// 7. LÓGICA DE INFORMES Y PDF
 // ==========================================
 function renderizarInforme() {
     const historial = JSON.parse(localStorage.getItem('wtc_jornadas')) || [];
@@ -356,32 +435,19 @@ function renderizarInforme() {
     }
 
     let totalHoras = 0; let totalDinero = 0; let htmlTabla = '';
-
     for (const j of historial) {
         totalHoras += parseFloat(j.horasTrabajadas);
         totalDinero += parseFloat(j.totalEstimado);
-        
         let festivoMarca = (j.tipoFestivo && j.tipoFestivo !== 'none') ? '*' : '';
         let fechaVis = j.fechaMostrar || j.fecha;
-
         htmlTabla += `
             <div class="reporte-item">
-                <div>
-                    <strong>${fechaVis}</strong> ${festivoMarca}<br>
-                    <span style="color: gray; font-size: 0.8rem;">${j.inicio} - ${j.fin}</span>
-                </div>
-                <div style="text-align: right;">
-                    ${j.horasTrabajadas} hrs<br>
-                    <strong>${perfil.moneda} ${j.totalEstimado}</strong>
-                </div>
-            </div>
-        `;
+                <div><strong>${fechaVis}</strong> ${festivoMarca}<br><span style="color: gray; font-size: 0.8rem;">${j.inicio} - ${j.fin}</span></div>
+                <div style="text-align: right;">${j.horasTrabajadas} hrs<br><strong>${perfil.moneda} ${j.totalEstimado}</strong></div>
+            </div>`;
     }
-
-    contTotales.innerHTML = `
-        <div><span class="material-symbols-rounded">schedule</span><br>Total Horas<span>${totalHoras.toFixed(2)}</span></div>
-        <div><span class="material-symbols-rounded">payments</span><br>Total Ingresos<span>${perfil.moneda} ${totalDinero.toFixed(2)}</span></div>
-    `;
+    contTotales.innerHTML = `<div><span class="material-symbols-rounded">schedule</span><br>Total Horas<span>${totalHoras.toFixed(2)}</span></div>
+        <div><span class="material-symbols-rounded">payments</span><br>Total Ingresos<span>${perfil.moneda} ${totalDinero.toFixed(2)}</span></div>`;
     contTabla.innerHTML = htmlTabla;
 }
 
@@ -392,7 +458,6 @@ window.descargarPDF = function() {
     const originalText = btn.innerHTML;
     // @ts-ignore
     btn.innerHTML = '<span class="material-symbols-rounded">hourglass_top</span> Generando...';
-
     const opt = { margin: 15, filename: 'Reporte_WorkingTime.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }};
 
     // @ts-ignore
@@ -406,17 +471,20 @@ window.descargarPDF = function() {
                 window.NativeShare(base64Data, nombre).then(() => { // @ts-ignore
                     btn.innerHTML = originalText; }).catch(err => { console.log(err); // @ts-ignore
                     btn.innerHTML = originalText; });
-            } else {
-                // @ts-ignore
+            } else { // @ts-ignore
                 html2pdf().set(opt).from(elemento).save().then(() => { // @ts-ignore
                     btn.innerHTML = originalText; });
             }
-        } catch (error) { alert('Error: ' + error); // @ts-ignore
+        } catch (error) { // @ts-ignore
+        window.showToast('Error: ' + error, 'error'); // @ts-ignore
         btn.innerHTML = originalText; }
-    }).catch(function(err) { alert('Error PDF: ' + err); // @ts-ignore
+    }).catch(function(err) { // @ts-ignore
+    window.showToast('Error PDF: ' + err, 'error'); // @ts-ignore
     btn.innerHTML = originalText; });
 };
 
+// Iniciar app
+initTimePicker();
 cargarPerfil();
 renderizarInicio();
 renderizarInforme();
