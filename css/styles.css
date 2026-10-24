@@ -17,7 +17,6 @@ body {
   overflow: hidden;
 }
 
-/* Header Minimalista */
 header {
   padding: 20px 25px;
   background: transparent;
@@ -42,7 +41,6 @@ header h1 {
   color: var(--main-dark);
 }
 
-/* AQUI ESTÁ EL CAMBIO PRINCIPAL: Bloqueamos el scroll de la página entera */
 main {
   flex: 1;
   overflow: hidden; 
@@ -54,7 +52,6 @@ main {
   padding: 0 25px;
 }
 
-/* Control de pantallas (Ahora ocupan el 100% de la altura) */
 .screen {
   display: none;
   height: 100%;
@@ -70,18 +67,15 @@ main {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Para la pantalla Inicio: La parte superior no se encoje */
 #view-inicio .dashboard-padding {
   flex-shrink: 0;
 }
 
-/* Las otras pantallas sí necesitan scroll normal entero */
 #view-jornadas, #view-informes, #view-perfil {
   overflow-y: auto;
   padding-bottom: 120px;
 }
 
-/* TARJETA AZUL PRINCIPAL */
 .main-card {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   border-radius: var(--radius-lg);
@@ -120,7 +114,6 @@ main {
   opacity: 0.8;
 }
 
-/* ACCIONES RÁPIDAS */
 .quick-actions {
   display: flex;
   justify-content: center;
@@ -152,15 +145,14 @@ main {
   color: var(--main-dark);
 }
 
-/* EL SEGUNDO CAMBIO IMPORTANTE: El panel oscuro ahora tiene su propio scroll interno */
 .dark-sheet {
   background-color: var(--main-dark);
   border-radius: 30px 30px 0 0;
   padding: 30px 25px;
   box-shadow: var(--shadow-dark);
-  flex: 1; /* Toma todo el espacio hacia abajo */
-  overflow-y: auto; /* Habilita el scroll interno aquí */
-  padding-bottom: 120px; /* Evita que el navbar tape el último elemento */
+  flex: 1; 
+  overflow-y: auto; 
+  padding-bottom: 120px; 
 }
 
 .sheet-header {
@@ -195,9 +187,7 @@ main {
 .jornada-info { flex: 1; }
 .jornada-info h4 { color: var(--white); font-size: 0.95rem; margin-bottom: 2px;}
 .jornada-info p { color: #94a3b8; font-size: 0.8rem; }
-.jornada-amount {
-  text-align: right;
-}
+.jornada-amount { text-align: right; }
 .jornada-amount h4 { color: var(--white); font-size: 1rem; }
 .jornada-amount p { color: var(--accent-light); font-size: 0.8rem; }
 
@@ -224,7 +214,6 @@ main {
 .btn-action-sm.edit { color: var(--accent-light); background: rgba(96, 165, 250, 0.1); }
 .btn-action-sm.delete { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
 
-/* FORMULARIOS BÁSICOS */
 .form-container {
   background-color: var(--white);
   border-radius: var(--radius-lg);
@@ -272,27 +261,14 @@ main {
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="time"]::-webkit-calendar-picker-indicator {
+input[type="date"]::-webkit-calendar-picker-indicator {
     display: none;
     -webkit-appearance: none;
 }
-input[type="date"], input[type="time"] {
+input[type="date"] {
     appearance: none;
     -webkit-appearance: none;
 }
-
-.checkbox-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-}
-.checkbox-group input {
-  width: 20px; height: 20px;
-  accent-color: var(--accent-blue);
-}
-.checkbox-group label { margin: 0; color: var(--main-dark); font-size: 0.95rem; }
 
 .btn-primary {
   width: 100%;
@@ -311,7 +287,6 @@ input[type="date"], input[type="time"] {
   box-shadow: var(--shadow-soft);
 }
 .btn-primary:active { transform: scale(0.98); }
-
 .btn-secondary {
   width: 100%;
   padding: 16px;
@@ -329,17 +304,13 @@ input[type="date"], input[type="time"] {
   margin-top: 10px;
 }
 
-/* REPORTES */
 .report-box {
   background-color: #f8fafc;
   border-radius: 16px;
   padding: 20px;
   border: 1px solid #e2e8f0;
 }
-.report-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
+.report-header { text-align: center; margin-bottom: 20px; }
 .report-totals {
   display: flex;
   justify-content: space-between;
@@ -359,7 +330,6 @@ input[type="date"], input[type="time"] {
   font-size: 0.9rem;
 }
 
-/* NAVEGACIÓN INFERIOR ESTILO APP */
 .bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -393,3 +363,133 @@ input[type="date"], input[type="time"] {
   background-color: rgba(255,255,255,0.1);
   color: var(--accent-light);
 }
+
+/* ========================================= */
+/* NUEVOS COMPONENTES: TOAST Y RELOJ NATIVO  */
+/* ========================================= */
+
+/* 1. Alerta Toast */
+#custom-toast {
+    position: fixed;
+    bottom: -150px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--card-dark);
+    color: var(--white);
+    padding: 14px 24px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-dark);
+    transition: bottom 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 9999;
+    white-space: pre-wrap;
+    text-align: left;
+    width: 85%;
+    max-width: 400px;
+}
+#custom-toast.toast-visible {
+    bottom: 110px; 
+}
+#toast-icon { color: var(--accent-light); font-size: 28px; }
+
+/* 2. Scroll Time Picker */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+.modal-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+.time-picker-card {
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    width: 320px;
+    padding: 25px;
+    box-shadow: var(--shadow-soft);
+    transform: translateY(30px);
+    transition: transform 0.3s ease;
+}
+.modal-overlay.visible .time-picker-card {
+    transform: translateY(0);
+}
+.time-picker-card h3 {
+    text-align: center;
+    color: var(--main-dark);
+    margin-bottom: 25px;
+    font-size: 1.2rem;
+}
+.time-picker-columns {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f8fafc;
+    border-radius: 16px;
+    padding: 10px;
+    position: relative;
+}
+/* Barra de selección central */
+.time-picker-columns::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10px; right: 10px;
+    height: 50px;
+    background: rgba(37, 99, 235, 0.15);
+    transform: translateY(-50%);
+    border-radius: 12px;
+    pointer-events: none;
+}
+.time-column {
+    height: 150px;
+    width: 80px;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none; 
+}
+.time-column::-webkit-scrollbar { display: none; }
+.time-item {
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    scroll-snap-align: center;
+}
+.time-item.empty { height: 50px; }
+.time-separator {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--main-dark);
+    padding: 0 15px;
+}
+.time-picker-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+}
+.time-picker-actions button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    flex: 1;
+    margin: 0 5px;
+}
+.btn-cancel { background: #e2e8f0; color: var(--text-muted); }
+.btn-confirm { background: var(--accent-blue); color: var(--white); }
