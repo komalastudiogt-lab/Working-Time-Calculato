@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Working Time</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <header>
+        <h1>Working Time</h1>
+    </header>
+
+    <main id="app-content">
+        
+        <!-- PANTALLA: INICIO -->
+        <section id="view-inicio" class="screen active">
+            <div class="card" style="text-align: center;">
+                <h2 style="margin-bottom: 10px;">Resumen de Jornadas</h2>
+                
+                <div id="inicio-lista-jornadas">
+                    <p style="color: var(--color-arena); margin-top: 10px;">No hay jornadas registradas.</p>
+                </div>
+
+                <button class="btn" style="margin-top: 20px;" onclick="switchScreen('view-jornadas', 1)">+ Nueva Jornada</button>
+            </div>
+        </section>
+
+        <!-- PANTALLA: JORNADAS -->
+        <section id="view-jornadas" class="screen">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">Registrar Jornada</h2>
+                <form id="form-jornada">
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" id="jornada-fecha" class="form-control" required>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Entrada</label>
+                            <input type="time" id="jornada-inicio" class="form-control" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Salida</label>
+                            <input type="time" id="jornada-fin" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Pausa no remunerada (minutos)</label>
+                        <input type="number" id="jornada-pausa" class="form-control" value="0" min="0">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 10px; padding: 10px 0;">
+                        <input type="checkbox" id="jornada-festivo" style="width: 22px; height: 22px; accent-color: var(--color-verde-salvia);">
+                        <label style="margin-bottom: 0;">Aplicar recargo festivo</label>
+                    </div>
+                    <div class="form-group">
+                        <label>Observaciones (opcional)</label>
+                        <input type="text" id="jornada-notas" class="form-control" placeholder="Ej. Turno extra">
+                    </div>
+                    <button type="submit" class="btn">Guardar Jornada</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- PANTALLA: INFORMES -->
+        <section id="view-informes" class="screen">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">Generar Informe</h2>
+                
+                <!-- Este es el contenedor que se convertirá en PDF -->
+                <div id="reporte-contenido">
+                    <h3 style="text-align: center; margin-bottom: 15px; color: var(--color-grafito);">Reporte de Horas</h3>
+                    <p id="reporte-perfil" style="text-align: center; font-size: 0.9rem; margin-bottom: 20px;"></p>
+                    
+                    <div id="resumen-totales" style="display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: var(--color-verde-salvia); border-bottom: 2px solid var(--color-verde-salvia); padding-bottom: 10px;">
+                        <!-- Inyectado por JS -->
+                    </div>
+                    
+                    <div id="tabla-informe">
+                        <!-- Inyectado por JS -->
+                    </div>
+                </div>
+
+                <button class="btn" style="margin-top: 20px; background-color: var(--color-arena);" onclick="descargarPDF()">Descargar PDF</button>
+            </div>
+        </section>
+
+        <!-- PANTALLA: PERFIL -->
+        <section id="view-perfil" class="screen">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">Datos Laborales</h2>
+                <form id="form-perfil">
+                    <div class="form-group">
+                        <label>Nombre o Alias</label>
+                        <input type="text" id="perfil-nombre" class="form-control" placeholder="Ej. Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label>Moneda</label>
+                        <input type="text" id="perfil-moneda" class="form-control" placeholder="Ej. Q o $">
+                    </div>
+                    <div class="form-group">
+                        <label>Tarifa habitual por hora</label>
+                        <input type="number" id="perfil-tarifa" class="form-control" placeholder="Ej. 15.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Recargo festivo predeterminado (%)</label>
+                        <input type="number" id="perfil-festivo" class="form-control" placeholder="Ej. 100" value="100">
+                    </div>
+                    <button type="submit" class="btn">Guardar Perfil</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <nav>
+        <div class="nav-item active">Inicio</div>
+        <div class="nav-item">Jornadas</div>
+        <div class="nav-item">Informes</div>
+        <div class="nav-item">Perfil</div>
+    </nav>
+
+    <!-- Scripts de la aplicación -->
+    <script src="js/app.js"></script>
+    <!-- Librería para generar PDF localmente -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</body>
+</html>
