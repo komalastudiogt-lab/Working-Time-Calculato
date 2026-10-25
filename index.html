@@ -6,6 +6,8 @@
     <title>Working Time</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
     <link rel="stylesheet" href="./css/styles.css">
+    <!-- Librería para la gráfica -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -47,8 +49,9 @@
             <div class="dark-sheet">
                 <div class="sheet-header">
                     <h3>Historial de Jornadas</h3>
-                    <span class="material-symbols-rounded">more_horiz</span>
+                    <span class="material-symbols-rounded" style="font-size: 1.2rem; opacity: 0.7;">swipe_left</span>
                 </div>
+                <p style="font-size: 0.75rem; color: #64748b; margin-top: -15px; margin-bottom: 20px;">Desliza un turno hacia la izquierda para opciones</p>
                 
                 <div id="inicio-lista-jornadas">
                     <p style="color: #94a3b8; text-align: center; margin-top: 20px;">No hay jornadas registradas.</p>
@@ -62,7 +65,6 @@
                     <h2 class="section-title">Registrar Jornada</h2>
                     <form id="form-jornada">
                         
-                        <!-- NUEVO: Input bloqueado conectado a nuestro calendario custom -->
                         <div class="form-group">
                             <label>Fecha de Entrada</label>
                             <div class="input-wrapper">
@@ -124,6 +126,22 @@
 
         <section id="view-informes" class="screen">
             <div class="dashboard-padding">
+                
+                <!-- NUEVO: Gráfica de Rendimiento -->
+                <div class="form-container" style="margin-bottom: 20px; padding-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h2 class="section-title" style="margin: 0; font-size: 1.1rem;">Rendimiento</h2>
+                        <select id="filtro-grafica" class="form-control" style="width: auto; padding: 8px 30px 8px 15px; font-size: 0.85rem; height: auto;" onchange="renderizarInforme()">
+                            <option value="15">15 Días</option>
+                            <option value="30">30 Días</option>
+                            <option value="all">Todo</option>
+                        </select>
+                    </div>
+                    <div style="position: relative; height: 180px; width: 100%;">
+                        <canvas id="workChart"></canvas>
+                    </div>
+                </div>
+
                 <div class="form-container">
                     <h2 class="section-title">Generar Informe</h2>
                     
@@ -220,7 +238,7 @@
         </div>
     </div>
 
-    <!-- NUEVO: Modal de Calendario Personalizado -->
+    <!-- Modal de Calendario Personalizado -->
     <div id="date-picker-modal" class="modal-overlay">
         <div class="date-picker-card">
             <div class="dp-header">
@@ -231,9 +249,7 @@
             <div class="dp-weekdays">
                 <span>D</span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span>
             </div>
-            <div class="dp-days" id="dp-days-grid">
-                <!-- Generado por JS -->
-            </div>
+            <div class="dp-days" id="dp-days-grid"></div>
             <div class="time-picker-actions" style="margin-top: 15px;">
                 <button type="button" class="btn-cancel" onclick="closeDatePicker()">Cancelar</button>
                 <button type="button" class="btn-confirm" onclick="confirmDatePicker()">Establecer</button>
