@@ -1,13 +1,14 @@
 @import url('variables.css');
 
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-body { background: var(--bg-gradient); color: var(--text-main); height: 100dvh; display: flex; flex-direction: column; overflow: hidden; transition: background 0.3s ease, color 0.3s ease; }
+/* Usamos 100vh fijo para que Android no congele la pantalla intentando calcular tamaños dinámicos */
+body { background: var(--bg-gradient); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: background 0.3s ease, color 0.3s ease; }
 header { padding: 20px 25px; background: transparent; z-index: 10; flex-shrink: 0; }
 .header-content { display: flex; justify-content: space-between; align-items: center; }
 header h1 { font-size: 1.2rem; font-weight: 700; color: var(--main-dark); }
 .menu-icon, .profile-icon { font-size: 28px; color: var(--main-dark); cursor: pointer; }
 
-main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+main { flex: 1; overflow: hidden; display: flex; flex-direction: column; z-index: 1; }
 .dashboard-padding { padding: 0 25px; }
 
 .screen { display: none; height: 100%; width: 100%; animation: fadeIn 0.4s ease; }
@@ -37,9 +38,9 @@ main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
 .swipe-container { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-bottom: 15px; border-radius: var(--radius-md); background-color: transparent; }
 .swipe-container::-webkit-scrollbar { display: none; }
 .swipe-content { flex: 0 0 100%; scroll-snap-align: start; background-color: var(--card-dark); border-radius: var(--radius-md); padding: 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 15px; box-shadow: 2px 0 10px rgba(0,0,0,0.2); transition: background-color 0.3s ease; }
-.swipe-actions { flex: 0 0 160px; scroll-snap-align: end; display: flex; background-color: transparent; }
+.swipe-actions { flex: 0 0 120px; scroll-snap-align: end; display: flex; background-color: transparent; }
 .swipe-btn { flex: 1; display: flex; justify-content: center; align-items: center; color: #ffffff; border: none; cursor: pointer; font-size: 24px; }
-.swipe-btn.edit { background-color: var(--accent-blue); }
+.swipe-btn.edit { background-color: var(--accent-blue); border-radius: var(--radius-md) 0 0 var(--radius-md); margin-left: 5px; }
 .swipe-btn.delete { background-color: #ef4444; border-radius: 0 var(--radius-md) var(--radius-md) 0; }
 
 .jornada-icon { width: 45px; height: 45px; background-color: rgba(37, 99, 235, 0.2); color: var(--accent-light); border-radius: 12px; display: flex; justify-content: center; align-items: center; }
@@ -78,10 +79,10 @@ input[type="date"] { appearance: none; -webkit-appearance: none; }
 .nav-item.active { color: var(--bg-app); }
 .nav-item.active span:first-child { background-color: rgba(96, 165, 250, 0.15); color: var(--accent-light); }
 
-/* Corrección Crucial: Display NONE en vez de Opacity para no bloquear la pantalla */
-.menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none; backdrop-filter: blur(2px); }
+/* IMPORTANTE: Removido backdrop-filter para evitar congelamiento en Android */
+.menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; display: none; }
 .menu-overlay.visible { display: block; }
-.side-menu { position: fixed; top: 0; left: -100%; width: 80%; max-width: 320px; height: 100%; background-color: var(--bg-app); z-index: 1000; box-shadow: 5px 0 25px rgba(0,0,0,0.2); transition: left 0.3s ease; display: flex; flex-direction: column; overflow-y: auto; }
+.side-menu { position: fixed; top: 0; left: -100%; width: 80%; max-width: 320px; height: 100%; background-color: var(--bg-app); z-index: 1000; box-shadow: 5px 0 25px rgba(0,0,0,0.4); transition: left 0.3s ease; display: flex; flex-direction: column; overflow-y: auto; }
 .side-menu.open { left: 0; }
 .side-menu-header { padding: 30px 25px 20px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
 .side-menu-header h2 { font-size: 1.2rem; color: var(--main-dark); }
@@ -97,11 +98,11 @@ input[type="date"] { appearance: none; -webkit-appearance: none; }
 input:checked + .slider { background-color: var(--accent-blue); }
 input:checked + .slider:before { transform: translateX(22px); }
 
-/* Modales y Toast */
+/* IMPORTANTE: Removido backdrop-filter de modales */
 #custom-toast { position: fixed; bottom: -150px; left: 50%; transform: translateX(-50%); background-color: var(--card-dark); color: var(--bg-app); padding: 14px 24px; border-radius: 30px; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-dark); transition: bottom 0.5s ease; z-index: 9999; white-space: pre-wrap; text-align: left; width: 85%; max-width: 400px; }
 #custom-toast.toast-visible { bottom: 110px; }
 #toast-icon { color: var(--accent-light); font-size: 28px; }
-.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.7); display: none; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px); }
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.8); display: none; justify-content: center; align-items: center; z-index: 10000; }
 .modal-overlay.visible { display: flex; }
 .time-picker-card, .date-picker-card { background: var(--white); border-radius: var(--radius-lg); padding: 25px; box-shadow: var(--shadow-soft); }
 .time-picker-card { width: 320px; } .date-picker-card { width: 340px; }
