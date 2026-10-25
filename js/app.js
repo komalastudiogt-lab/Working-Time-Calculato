@@ -1,12 +1,3 @@
-// Funciones seguras para memoria (Evitan cuelgues)
-const safeGet = (key, fallback) => {
-    try { const val = localStorage.getItem(key); return val ? JSON.parse(val) : fallback; } 
-    catch(e) { return fallback; }
-};
-const safeSet = (key, data) => {
-    try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
-};
-
 window.showToast = function(message, icon = 'check_circle') {
     const toast = document.getElementById('custom-toast');
     if(!toast) return;
@@ -16,73 +7,7 @@ window.showToast = function(message, icon = 'check_circle') {
     setTimeout(() => { toast.className = 'toast-hidden'; }, 3500);
 };
 
-// ==========================================
-// MODO OSCURO Y MENÚ LATERAL
-// ==========================================
-const darkModeToggle = document.getElementById('dark-mode-toggle');
-const themeIcon = document.getElementById('theme-icon');
-
-function initTheme() {
-    const savedTheme = localStorage.getItem('wtc_theme');
-    if (savedTheme === 'dark') {
-        document.body.classList.add('dark-theme');
-        if(darkModeToggle) { // @ts-ignore
-            darkModeToggle.checked = true; }
-        if(themeIcon) { themeIcon.innerText = 'light_mode'; }
-    }
-}
-if(darkModeToggle) {
-    darkModeToggle.addEventListener('change', (e) => {
-        // @ts-ignore
-        if (e.target.checked) {
-            document.body.classList.add('dark-theme'); localStorage.setItem('wtc_theme', 'dark');
-            if(themeIcon) themeIcon.innerText = 'light_mode';
-        } else {
-            document.body.classList.remove('dark-theme'); localStorage.setItem('wtc_theme', 'light');
-            if(themeIcon) themeIcon.innerText = 'dark_mode';
-        }
-        const activeScreen = document.querySelector('.screen.active');
-        if(activeScreen && activeScreen.id === 'view-informes') { window.renderizarInforme(); }
-    });
-}
-window.openMenu = function() {
-    const m = document.getElementById('side-menu'); if(m) m.classList.add('open');
-    const o = document.getElementById('menu-overlay'); if(o) o.classList.add('visible');
-};
-window.closeMenu = function() {
-    const m = document.getElementById('side-menu'); if(m) m.classList.remove('open');
-    const o = document.getElementById('menu-overlay'); if(o) o.classList.remove('visible');
-};
-
-// ==========================================
-// RESPALDO DE DATOS
-// ==========================================
-window.exportarDatos = function() {
-    const datos = {
-        perfil: localStorage.getItem('wtc_perfil'),
-        jornadas: localStorage.getItem('wtc_jornadas'),
-        tema: localStorage.getItem('wtc_theme')
-    };
-    const texto = JSON.stringify(datos);
-    prompt("Copia todo este texto. Antes de borrar la app para actualizarla, guárdalo en tus notas. Luego presiona Restaurar y pégalo:", texto);
-};
-window.importarDatos = function() {
-    const texto = prompt("Pega aquí el código de respaldo que copiaste:");
-    if (texto) {
-        try {
-            const datos = JSON.parse(texto);
-            if (datos.perfil) localStorage.setItem('wtc_perfil', datos.perfil);
-            if (datos.jornadas) localStorage.setItem('wtc_jornadas', datos.jornadas);
-            if (datos.tema) localStorage.setItem('wtc_theme', datos.tema);
-            window.showToast("Datos restaurados con éxito", "cloud_done");
-            setTimeout(() => window.location.reload(), 1000);
-        } catch (e) { alert("Código de respaldo inválido."); }
-    }
-};
-
-// ==========================================
-// RELOJ Y CALENDARIO
-// ==========================================
+// Modales Custom (Hora y Fecha)
 let currentInputTarget = null;
 function initTimePicker() {
     const colHours = document.getElementById('tp-hours'); const colMins = document.getElementById('tp-minutes');
@@ -142,6 +67,7 @@ window.confirmDatePicker = function() {
     if(inputF) inputF.value = `${y}-${m}-${d}`; window.closeDatePicker();
 };
 
+// Navegación (4 Pestañas)
 const navItems = document.querySelectorAll('.nav-item'); const screens = document.querySelectorAll('.screen');
 function switchScreen(targetId, navIndex) {
     screens.forEach(screen => screen.classList.remove('active')); navItems.forEach(item => item.classList.remove('active'));
@@ -156,6 +82,7 @@ navItems.forEach(item => { item.addEventListener('click', () => { // @ts-ignore
 const fechaDash = document.getElementById('fecha-dashboard');
 if (fechaDash) { fechaDash.textContent = new Date().toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }); }
 
+// Perfil Original
 const formPerfil = document.getElementById('form-perfil');
 if (formPerfil) {
     formPerfil.addEventListener('submit', function(event) {
@@ -163,13 +90,13 @@ if (formPerfil) {
         const pNom = document.getElementById('perfil-nombre'); const pMon = document.getElementById('perfil-moneda'); const pTar = document.getElementById('perfil-tarifa'); const pFes = document.getElementById('perfil-festivo');
         // @ts-ignore
         const perfil = { nombre: pNom?pNom.value:'', moneda: pMon?pMon.value:'', tarifa: pTar?parseFloat(pTar.value)||0:0, festivo: pFes?parseFloat(pFes.value)||0:0 };
-        safeSet('wtc_perfil', perfil); window.showToast('¡Perfil guardado correctamente!', 'verified_user'); 
-        window.closeMenu(); window.renderizarInicio(); window.renderizarInforme();
+        localStorage.setItem('wtc_perfil', JSON.stringify(perfil)); window.showToast('¡Perfil guardado correctamente!', 'verified_user'); 
+        window.renderizarInicio(); window.renderizarInforme();
     });
 }
 function cargarPerfil() {
-    const p = safeGet('wtc_perfil', null);
-    if (p) { 
+    const guardado = localStorage.getItem('wtc_perfil');
+    if (guardado) { const p = JSON.parse(guardado);
         const pNom = document.getElementById('perfil-nombre'); if(pNom) pNom.value = p.nombre || ''; // @ts-ignore
         const pMon = document.getElementById('perfil-moneda'); if(pMon) pMon.value = p.moneda || ''; // @ts-ignore
         const pTar = document.getElementById('perfil-tarifa'); if(pTar) pTar.value = p.tarifa || ''; // @ts-ignore
@@ -177,15 +104,16 @@ function cargarPerfil() {
     }
 }
 
+// Lógica de Edición y Borrado
 let idEditando = null;
 window.eliminarJornada = function(id) {
     if(confirm("¿Eliminar este turno permanentemente?")) {
-        let h = safeGet('wtc_jornadas', []); h = h.filter(j => j.id !== id);
-        safeSet('wtc_jornadas', h); window.renderizarInicio(); window.renderizarInforme(); window.showToast('Jornada eliminada', 'delete');
+        let h = JSON.parse(localStorage.getItem('wtc_jornadas')) || []; h = h.filter(j => j.id !== id);
+        localStorage.setItem('wtc_jornadas', JSON.stringify(h)); window.renderizarInicio(); window.renderizarInforme(); window.showToast('Jornada eliminada', 'delete');
     }
 };
 window.prepararEdicion = function(id) {
-    const h = safeGet('wtc_jornadas', []); const j = h.find(x => x.id === id); if(!j) return;
+    const h = JSON.parse(localStorage.getItem('wtc_jornadas')) || []; const j = h.find(x => x.id === id); if(!j) return;
     idEditando = id;
     const fFec = document.getElementById('jornada-fecha'); if(fFec) fFec.value = j.fecha; // @ts-ignore
     const fIni = document.getElementById('jornada-inicio'); if(fIni) fIni.value = j.inicio; // @ts-ignore
@@ -212,13 +140,13 @@ window.cancelarEdicion = function() {
 };
 
 window.renderizarInicio = function() {
-    const cont = document.getElementById('inicio-lista-jornadas'); const h = safeGet('wtc_jornadas', []); const p = safeGet('wtc_perfil', { moneda: 'Q' });
+    const cont = document.getElementById('inicio-lista-jornadas'); const h = JSON.parse(localStorage.getItem('wtc_jornadas')) || []; const p = JSON.parse(localStorage.getItem('wtc_perfil')) || { moneda: 'Q' };
     const txtD = document.getElementById('inicio-total-dinero'); const txtH = document.getElementById('inicio-total-horas');
     if(!cont) return;
 
     let sumD = 0; let sumH = 0;
     if (h.length === 0) {
-        cont.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 20px;">No hay transacciones.</p>';
+        cont.innerHTML = '<p style="color: #94a3b8; text-align: center; margin-top: 20px;">No hay jornadas registradas.</p>';
         if(txtD) txtD.textContent = `${p.moneda} 0.00`; if(txtH) txtH.textContent = `0.00 hrs acumuladas`; return;
     }
 
@@ -254,7 +182,7 @@ if (formJornada) {
         const eFec = document.getElementById('jornada-fecha'); const eIni = document.getElementById('jornada-inicio'); const eFin = document.getElementById('jornada-fin'); const ePau = document.getElementById('jornada-pausa'); const eTip = document.getElementById('jornada-tipo-festivo'); const eNot = document.getElementById('jornada-notas');
         // @ts-ignore
         const fecha = eFec?eFec.value:''; const inicio = eIni?eIni.value:'00:00'; const fin = eFin?eFin.value:'00:00'; const pausaMinutos = ePau?parseInt(ePau.value)||0:0; const tipoFestivo = eTip?eTip.value:'none'; const notasUsuario = eNot?eNot.value:''; // @ts-ignore
-        const perfil = safeGet('wtc_perfil', { tarifa: 0, festivo: 0, moneda: '' });
+        const perfil = JSON.parse(localStorage.getItem('wtc_perfil')) || { tarifa: 0, festivo: 0, moneda: '' };
         
         let [hIni, mIni] = inicio.split(':').map(Number); let [hFin, mFin] = fin.split(':').map(Number);
         let minT1 = 0; let minT2 = 0; let cruza = false;
@@ -274,25 +202,25 @@ if (formJornada) {
         let nFin = notasUsuario ? `${subNot} | ${notasUsuario}` : subNot;
 
         const nJor = { id: idEditando ? idEditando : Date.now().toString(), fecha: fecha, fechaMostrar: fMos, inicio, fin, pausaMinutos, tipoFestivo: tipoFestivo, notas: nFin, horasTrabajadas: hrsTrab.toFixed(2), totalEstimado: totEst.toFixed(2), moneda: perfil.moneda };
-        let h = safeGet('wtc_jornadas', []); let msjA = "";
+        let h = JSON.parse(localStorage.getItem('wtc_jornadas')) || []; let msjA = "";
         
         if (idEditando) { const idx = h.findIndex(j => j.id === idEditando); if(idx !== -1) h[idx] = nJor; msjA = `¡Turno actualizado!\nTotal: ${perfil.moneda} ${totEst.toFixed(2)}`; } 
         else { h.push(nJor); msjA = `¡Turno guardado!\nTotal: ${perfil.moneda} ${totEst.toFixed(2)}`; }
 
-        safeSet('wtc_jornadas', h); window.cancelarEdicion(); setTimeout(() => { window.showToast(msjA, 'task_alt'); }, 150);
+        localStorage.setItem('wtc_jornadas', JSON.stringify(h)); window.cancelarEdicion(); setTimeout(() => { window.showToast(msjA, 'task_alt'); }, 150);
     });
 }
 
 let workChartInstancia = null;
 window.renderizarInforme = function() {
-    const h = safeGet('wtc_jornadas', []); const p = safeGet('wtc_perfil', { nombre: 'Usuario', moneda: '' });
+    const h = JSON.parse(localStorage.getItem('wtc_jornadas')) || []; const p = JSON.parse(localStorage.getItem('wtc_perfil')) || { nombre: 'Usuario', moneda: '' };
     const cTot = document.getElementById('resumen-totales'); const cTab = document.getElementById('tabla-informe');
     const pNom = document.getElementById('reporte-perfil'); if(pNom) pNom.textContent = `Trabajador: ${p.nombre || 'No especificado'}`;
     const eFiltro = document.getElementById('filtro-grafica'); // @ts-ignore
     const filtroDias = eFiltro ? eFiltro.value : '15';
 
     if (h.length === 0) {
-        if(cTot) cTot.innerHTML = ''; if(cTab) cTab.innerHTML = '<p style="text-align:center; color: var(--text-muted);">No hay datos para el informe.</p>'; 
+        if(cTot) cTot.innerHTML = ''; if(cTab) cTab.innerHTML = '<p style="text-align:center; color: #94a3b8;">No hay datos para el informe.</p>'; 
         if(workChartInstancia) workChartInstancia.destroy(); return; 
     }
 
@@ -300,4 +228,34 @@ window.renderizarInforme = function() {
     if(filtroDias !== 'all') { const fechaLimite = new Date(); fechaLimite.setDate(fechaLimite.getDate() - parseInt(filtroDias)); jornadasOrdenadas = jornadasOrdenadas.filter(j => new Date(j.fecha) >= fechaLimite); }
 
     let tH = 0; let tD = 0; let hTab = ''; const jInverso = [...jornadasOrdenadas].reverse();
-    for (const j of jInverso) { tH += parseFloat(j.horasTrabajadas); tD += pa
+    for (const j of jInverso) { tH += parseFloat(j.horasTrabajadas); tD += parseFloat(j.totalEstimado); let fM = (j.tipoFestivo && j.tipoFestivo !== 'none') ? '*' : ''; let fVis = j.fechaMostrar || j.fecha;
+        hTab += `<div class="reporte-item"><div><strong>${fVis}</strong> ${fM}<br><span style="color: gray; font-size: 0.8rem;">${j.inicio} - ${j.fin}</span></div><div style="text-align: right;">${j.horasTrabajadas} hrs<br><strong>${p.moneda} ${j.totalEstimado}</strong></div></div>`;
+    }
+    if(cTot) cTot.innerHTML = `<div><span class="material-symbols-rounded">schedule</span><br>Total Horas<span>${tH.toFixed(2)}</span></div><div><span class="material-symbols-rounded">payments</span><br>Total Ingresos<span>${p.moneda} ${tD.toFixed(2)}</span></div>`;
+    if(cTab) cTab.innerHTML = hTab;
+
+    const chartLabels = []; const chartData = []; const agrupado = {};
+    jornadasOrdenadas.forEach(j => { let diaVisual = j.fecha.substring(5); if(!agrupado[diaVisual]) agrupado[diaVisual] = 0; agrupado[diaVisual] += parseFloat(j.horasTrabajadas); });
+    for(let date in agrupado) { chartLabels.push(date); chartData.push(agrupado[date]); }
+
+    const ctx = document.getElementById('workChart'); if(workChartInstancia) workChartInstancia.destroy();
+    const textColor = '#64748b'; const gridColor = '#e2e8f0';
+    // @ts-ignore
+    if(ctx && window.Chart) { // @ts-ignore
+        workChartInstancia = new window.Chart(ctx, { type: 'bar', data: { labels: chartLabels, datasets: [{ label: 'Horas Trabajadas', data: chartData, backgroundColor: '#3b82f6', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: gridColor }, ticks: { color: textColor } }, x: { grid: { display: false }, ticks: { color: textColor } } } } });
+    }
+};
+
+window.descargarPDF = function() {
+    const e = document.getElementById('reporte-contenido'); const btn = document.querySelector('button[onclick="descargarPDF()"]');
+    if(!e || !btn) return; // @ts-ignore
+    const oTxt = btn.innerHTML; // @ts-ignore
+    btn.innerHTML = '<span class="material-symbols-rounded">hourglass_top</span> Generando...';
+    const opt = { margin: 15, filename: 'Reporte_WorkingTime.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }};
+    // @ts-ignore
+    html2pdf().set(opt).from(e).toPdf().output('datauristring').then(function (pdf) {
+        try { // @ts-ignore
+            if (window.NativeShare) { const b64 = pdf.split(',')[1]; const n = "Reporte_WorkingTime_" + Date.now() + ".pdf"; // @ts-ignore
+                window.NativeShare(b64, n).then(() => { btn.innerHTML = oTxt; }).catch(err => { console.log(err); btn.innerHTML = oTxt; });
+            } else { // @ts-ignore
+                html2pdf().set(opt).from(e).save().t
