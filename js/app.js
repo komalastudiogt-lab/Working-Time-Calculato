@@ -11,6 +11,63 @@ window.showToast = function(message, icon = 'check_circle') {
     }, 3500);
 };
 
+// ==========================================
+// MODO OSCURO Y MENÚ LATERAL (NUEVO)
+// ==========================================
+const darkModeToggle = document.getElementById('dark-mode-toggle');
+const themeIcon = document.getElementById('theme-icon');
+
+function initTheme() {
+    const savedTheme = localStorage.getItem('wtc_theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+        // @ts-ignore
+        darkModeToggle.checked = true;
+        // @ts-ignore
+        if(themeIcon) themeIcon.innerText = 'light_mode';
+    }
+}
+
+// @ts-ignore
+if(darkModeToggle) {
+    darkModeToggle.addEventListener('change', (e) => {
+        // @ts-ignore
+        if (e.target.checked) {
+            document.body.classList.add('dark-theme');
+            localStorage.setItem('wtc_theme', 'dark');
+            // @ts-ignore
+            if(themeIcon) themeIcon.innerText = 'light_mode';
+        } else {
+            document.body.classList.remove('dark-theme');
+            localStorage.setItem('wtc_theme', 'light');
+            // @ts-ignore
+            if(themeIcon) themeIcon.innerText = 'dark_mode';
+        }
+        
+        // Refrescar gráfica si estamos en la pestaña de informes para adaptar colores
+        const activeScreen = document.querySelector('.screen.active');
+        // @ts-ignore
+        if(activeScreen && activeScreen.id === 'view-informes') { renderizarInforme(); }
+    });
+}
+
+window.openMenu = function() {
+    // @ts-ignore
+    document.getElementById('side-menu').classList.add('open');
+    // @ts-ignore
+    document.getElementById('menu-overlay').classList.add('visible');
+};
+
+window.closeMenu = function() {
+    // @ts-ignore
+    document.getElementById('side-menu').classList.remove('open');
+    // @ts-ignore
+    document.getElementById('menu-overlay').classList.remove('visible');
+};
+
+// ==========================================
+// RELOJ SCROLL PERSONALIZADO
+// ==========================================
 let currentInputTarget = null;
 function initTimePicker() {
     const colHours = document.getElementById('tp-hours'); const colMins = document.getElementById('tp-minutes');
@@ -95,7 +152,10 @@ formPerfil.addEventListener('submit', function(event) {
     event.preventDefault(); // @ts-ignore
     const perfil = { nombre: document.getElementById('perfil-nombre').value, moneda: document.getElementById('perfil-moneda').value, tarifa: parseFloat(document.getElementById('perfil-tarifa').value) || 0, festivo: parseFloat(document.getElementById('perfil-festivo').value) || 0 };
     localStorage.setItem('wtc_perfil', JSON.stringify(perfil)); // @ts-ignore
-    window.showToast('¡Perfil guardado correctamente!', 'verified_user'); renderizarInicio(); renderizarInforme();
+    window.showToast('¡Perfil guardado correctamente!', 'verified_user'); 
+    // @ts-ignore
+    window.closeMenu();
+    renderizarInicio(); renderizarInforme();
 });
 function cargarPerfil() {
     const guardado = localStorage.getItem('wtc_perfil');
@@ -140,7 +200,7 @@ function renderizarInicio() {
 
     let sumD = 0; let sumH = 0;
     if (h.length === 0) { // @ts-ignore
-        cont.innerHTML = '<p style="color: #64748b; text-align: center; margin-top: 20px;">No hay transacciones.</p>';
+        cont.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 20px;">No hay transacciones.</p>';
         if(txtD) txtD.textContent = `${p.moneda} 0.00`; if(txtH) txtH.textContent = `0.00 hrs acumuladas`; return;
     }
 
@@ -151,7 +211,7 @@ function renderizarInicio() {
     cont.innerHTML = ''; 
     for (const j of hInv) {
         const item = document.createElement('div'); 
-        item.className = 'swipe-container'; // NUEVO: Swipe framework
+        item.className = 'swipe-container'; 
         let fVis = j.fechaMostrar || j.fecha;
         let icClass = (j.tipoFestivo && j.tipoFestivo !== 'none') ? "celebration" : "work_history";
         
@@ -212,9 +272,6 @@ formJornada.addEventListener('submit', function(event) {
     window.showToast(msjA, 'task_alt'); }, 150);
 });
 
-// ==========================================
-// 7. LÓGICA DE INFORMES, CHART Y PDF
-// ==========================================
 let workChartInstancia = null;
 
 window.renderizarInforme = function() {
@@ -233,19 +290,16 @@ window.renderizarInforme = function() {
         return; 
     }
 
-    // Ordenar fechas cronológicamente para la gráfica y filtrado
     let jornadasOrdenadas = [...h].sort((a,b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
     
-    // Filtrar por días
     if(filtroDias !== 'all') {
         const fechaLimite = new Date();
         fechaLimite.setDate(fechaLimite.getDate() - parseInt(filtroDias));
         jornadasOrdenadas = jornadasOrdenadas.filter(j => new Date(j.fecha) >= fechaLimite);
     }
 
-    // Datos para la tabla
     let tH = 0; let tD = 0; let hTab = '';
-    const jInverso = [...jornadasOrdenadas].reverse(); // Tabla muestra recientes primero
+    const jInverso = [...jornadasOrdenadas].reverse();
     
     for (const j of jInverso) {
         tH += parseFloat(j.horasTrabajadas); tD += parseFloat(j.totalEstimado);
@@ -256,69 +310,31 @@ window.renderizarInforme = function() {
     cTot.innerHTML = `<div><span class="material-symbols-rounded">schedule</span><br>Total Horas<span>${tH.toFixed(2)}</span></div><div><span class="material-symbols-rounded">payments</span><br>Total Ingresos<span>${p.moneda} ${tD.toFixed(2)}</span></div>`; // @ts-ignore
     cTab.innerHTML = hTab;
 
-    // --- GRÁFICA CHART.JS ---
-    const chartLabels = [];
-    const chartData = [];
-    
-    // Agrupar por fecha para la gráfica
+    // Gráfica
+    const chartLabels = []; const chartData = [];
     const agrupado = {};
     jornadasOrdenadas.forEach(j => {
-        let diaVisual = j.fecha.substring(5); // Solo MM-DD
+        let diaVisual = j.fecha.substring(5);
         if(!agrupado[diaVisual]) agrupado[diaVisual] = 0;
         agrupado[diaVisual] += parseFloat(j.horasTrabajadas);
     });
     
-    for(let date in agrupado) {
-        chartLabels.push(date);
-        chartData.push(agrupado[date]);
-    }
+    for(let date in agrupado) { chartLabels.push(date); chartData.push(agrupado[date]); }
 
     const ctx = document.getElementById('workChart');
     if(workChartInstancia) workChartInstancia.destroy();
     
+    // Obtener color del texto según el tema
+    const isDark = document.body.classList.contains('dark-theme');
+    const textColor = isDark ? '#f8fafc' : '#64748b';
+    const gridColor = isDark ? '#334155' : '#e2e8f0';
+
     // @ts-ignore
-    if(ctx && window.Chart) {
-        // @ts-ignore
+    if(ctx && window.Chart) { // @ts-ignore
         workChartInstancia = new window.Chart(ctx, {
             type: 'bar',
-            data: {
-                labels: chartLabels,
-                datasets: [{
-                    label: 'Horas Trabajadas',
-                    data: chartData,
-                    backgroundColor: '#3b82f6',
-                    borderRadius: 6
-                }]
-            },
+            data: { labels: chartLabels, datasets: [{ label: 'Horas Trabajadas', data: chartData, backgroundColor: '#3b82f6', borderRadius: 6 }] },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
                 scales: { 
-                    y: { beginAtZero: true, grid: { color: '#e2e8f0' } },
-                    x: { grid: { display: false } }
-                }
-            }
-        });
-    }
-};
-
-window.descargarPDF = function() {
-    const e = document.getElementById('reporte-contenido'); const btn = document.querySelector('button[onclick="descargarPDF()"]'); // @ts-ignore
-    const oTxt = btn.innerHTML; // @ts-ignore
-    btn.innerHTML = '<span class="material-symbols-rounded">hourglass_top</span> Generando...';
-    const opt = { margin: 15, filename: 'Reporte_WorkingTime.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }};
-    // @ts-ignore
-    html2pdf().set(opt).from(e).toPdf().output('datauristring').then(function (pdf) {
-        try { // @ts-ignore
-            if (window.NativeShare) { const b64 = pdf.split(',')[1]; const n = "Reporte_WorkingTime_" + Date.now() + ".pdf"; // @ts-ignore
-                window.NativeShare(b64, n).then(() => { btn.innerHTML = oTxt; }).catch(err => { console.log(err); btn.innerHTML = oTxt; });
-            } else { // @ts-ignore
-                html2pdf().set(opt).from(e).save().then(() => { btn.innerHTML = oTxt; }); }
-        } catch (error) { // @ts-ignore
-        window.showToast('Error: ' + error, 'error'); btn.innerHTML = oTxt; }
-    }).catch(function(err) { // @ts-ignore
-    window.showToast('Error PDF: ' + err, 'error'); btn.innerHTML = oTxt; });
-};
-
-initTimePicker(); cargarPerfil(); renderizarInicio(); renderizarInforme();
+                    y: 
