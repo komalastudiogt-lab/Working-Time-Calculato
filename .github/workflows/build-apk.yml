@@ -24,6 +24,11 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
+      - name: Generar Firma Fija (Permite actualizaciones sin desinstalar)
+        run: |
+          mkdir -p ~/.android
+          keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "C=US, O=Android, CN=Android Debug"
+
       - name: Preparar Capacitor e inyectar puente nativo
         run: |
           mkdir www
@@ -53,6 +58,8 @@ jobs:
           EOF
           
           npx esbuild native-bridge.js --bundle --outfile=www/js/native-bridge.js
+          
+          sed -i 's|<script src="./js/app.js"></script>|<script src="./js/native-bridge.js"></script><script src="./js/app.js"></script>|g' www/index.html
           
           npx cap init "Working Time" "com.workingtime.app" --web-dir www
           npx cap add android
