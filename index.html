@@ -6,7 +6,8 @@
     <title>Working Time</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
     <link rel="stylesheet" href="./css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- El atributo DEFER evita que la app se congele esperando la gráfica -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </head>
 <body>
     <header>
@@ -200,7 +201,6 @@
                 </div>
                 <button type="submit" class="btn-primary" style="margin-top: 10px;">Guardar Perfil</button>
                 
-                <!-- BOTONES DE RESPALDO PARA NO PERDER DATOS EN ACTUALIZACIONES -->
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="button" class="btn-secondary" style="flex: 1; padding: 10px; font-size: 0.85rem;" onclick="exportarDatos()">
                         <span class="material-symbols-rounded" style="font-size: 18px;">cloud_upload</span> Respaldar
