@@ -6,16 +6,16 @@
     <title>Working Time</title>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
     <link rel="stylesheet" href="./css/styles.css">
-    <!-- Librería para la gráfica -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
     <header>
         <div class="header-content">
-            <span class="material-symbols-rounded menu-icon">sort</span>
+            <!-- Icono de Menú ahora abre el panel lateral -->
+            <span class="material-symbols-rounded menu-icon" onclick="openMenu()">sort</span>
             <h1>Working Time</h1>
-            <span class="material-symbols-rounded profile-icon">account_circle</span>
+            <span class="material-symbols-rounded profile-icon" onclick="openMenu()">account_circle</span>
         </div>
     </header>
 
@@ -127,7 +127,6 @@
         <section id="view-informes" class="screen">
             <div class="dashboard-padding">
                 
-                <!-- NUEVO: Gráfica de Rendimiento -->
                 <div class="form-container" style="margin-bottom: 20px; padding-bottom: 10px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <h2 class="section-title" style="margin: 0; font-size: 1.1rem;">Rendimiento</h2>
@@ -162,47 +161,9 @@
             </div>
         </section>
 
-        <section id="view-perfil" class="screen">
-            <div class="dashboard-padding">
-                <div class="form-container">
-                    <h2 class="section-title">Datos Laborales</h2>
-                    <form id="form-perfil">
-                        <div class="form-group">
-                            <label>Nombre o Alias</label>
-                            <div class="input-wrapper">
-                                <span class="material-symbols-rounded">badge</span>
-                                <input type="text" id="perfil-nombre" class="form-control" placeholder="Ej. Juan Pérez">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Moneda</label>
-                            <div class="input-wrapper">
-                                <span class="material-symbols-rounded">payments</span>
-                                <input type="text" id="perfil-moneda" class="form-control" placeholder="Ej. Q o $">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Tarifa por hora</label>
-                            <div class="input-wrapper">
-                                <span class="material-symbols-rounded">monetization_on</span>
-                                <input type="number" id="perfil-tarifa" class="form-control" placeholder="Ej. 15.00" step="0.01">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Recargo festivo (%)</label>
-                            <div class="input-wrapper">
-                                <span class="material-symbols-rounded">percent</span>
-                                <input type="number" id="perfil-festivo" class="form-control" placeholder="Ej. 100" value="100">
-                            </div>
-                        </div>
-                        <button type="submit" class="btn-primary">Guardar Perfil</button>
-                    </form>
-                </div>
-            </div>
-        </section>
-
     </main>
 
+    <!-- Barra de Navegación Inferior (Ahora solo 3 botones) -->
     <nav class="bottom-nav">
         <div class="nav-item active" data-target="view-inicio" data-index="0">
             <span class="material-symbols-rounded">home</span>
@@ -216,13 +177,60 @@
             <span class="material-symbols-rounded">pie_chart</span>
             <span>Informes</span>
         </div>
-        <div class="nav-item" data-target="view-perfil" data-index="3">
-            <span class="material-symbols-rounded">person</span>
-            <span>Perfil</span>
-        </div>
     </nav>
 
-    <!-- Modal de Rueda de Tiempo (Scroll Picker) -->
+    <!-- NUEVO: Menú Lateral (Drawer) -->
+    <div id="menu-overlay" class="menu-overlay" onclick="closeMenu()"></div>
+    <aside id="side-menu" class="side-menu">
+        <div class="side-menu-header">
+            <h2>Configuración</h2>
+            <button class="close-menu-btn" onclick="closeMenu()"><span class="material-symbols-rounded">close</span></button>
+        </div>
+        
+        <div class="side-menu-content">
+            <form id="form-perfil">
+                <div class="form-group">
+                    <label>Nombre o Alias</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-rounded">badge</span>
+                        <input type="text" id="perfil-nombre" class="form-control" placeholder="Ej. Juan Pérez">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Moneda</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-rounded">payments</span>
+                        <input type="text" id="perfil-moneda" class="form-control" placeholder="Ej. Q o $">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Tarifa por hora</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-rounded">monetization_on</span>
+                        <input type="number" id="perfil-tarifa" class="form-control" placeholder="Ej. 15.00" step="0.01">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Recargo festivo (%)</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-rounded">percent</span>
+                        <input type="number" id="perfil-festivo" class="form-control" placeholder="Ej. 100" value="100">
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 10px;">Guardar Perfil</button>
+            </form>
+        </div>
+
+        <div class="theme-switch-wrapper">
+            <span><span class="material-symbols-rounded" id="theme-icon">dark_mode</span> Modo Oscuro</span>
+            <label class="theme-switch">
+                <input type="checkbox" id="dark-mode-toggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </aside>
+
+    <!-- Modales -->
     <div id="time-picker-modal" class="modal-overlay">
         <div class="time-picker-card">
             <h3>Seleccionar Hora</h3>
@@ -238,7 +246,6 @@
         </div>
     </div>
 
-    <!-- Modal de Calendario Personalizado -->
     <div id="date-picker-modal" class="modal-overlay">
         <div class="date-picker-card">
             <div class="dp-header">
@@ -257,7 +264,6 @@
         </div>
     </div>
 
-    <!-- Burbuja de Notificación Inteligente (Toast) -->
     <div id="custom-toast" class="toast-hidden">
         <span class="material-symbols-rounded" id="toast-icon">check_circle</span>
         <span id="toast-message">Mensaje</span>
