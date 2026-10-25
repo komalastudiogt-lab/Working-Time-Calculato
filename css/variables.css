@@ -1,17 +1,37 @@
 :root {
-  /* Paleta Fintech (Azul Brillante y Panel Oscuro) */
-  --bg-app: #e8f1f8;
-  --main-dark: #0f172a; /* Panel inferior y nav */
-  --card-dark: #1e293b; /* Tarjetas dentro del panel */
-  --accent-blue: #2563eb; /* Azul brillante principal */
-  --accent-light: #60a5fa; /* Azul claro para detalles */
+  /* Paleta Clara (Por defecto) */
+  --bg-app: #f0f7fa;
+  --bg-gradient: linear-gradient(135deg, #f0f7fa 0%, #dbeafe 100%);
+  --main-dark: #0f172a; 
+  --card-dark: #1e293b; 
+  --accent-blue: #2563eb; 
+  --accent-light: #60a5fa; 
   --text-main: #0f172a;
   --text-muted: #64748b;
   --white: #ffffff;
+  --form-bg: #f8fafc;
+  --border-color: #e2e8f0;
   
-  /* Formas y Sombras */
   --radius-lg: 24px;
   --radius-md: 16px;
   --shadow-soft: 0 10px 25px rgba(37, 99, 235, 0.15);
   --shadow-dark: 0 -10px 20px rgba(0,0,0,0.1);
+}
+
+/* Paleta Modo Oscuro */
+body.dark-theme {
+  --bg-app: #0f172a;
+  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  --main-dark: #f8fafc; 
+  --card-dark: #0f172a; 
+  --accent-blue: #3b82f6; 
+  --accent-light: #93c5fd; 
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --white: #1e293b;
+  --form-bg: #0f172a;
+  --border-color: #334155;
+  
+  --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.4);
+  --shadow-dark: 0 -10px 20px rgba(0,0,0,0.4);
 }
